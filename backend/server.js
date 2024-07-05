@@ -23,10 +23,8 @@ const HEADERS = {
 };
 
 /** Get videos */
-app.get("/get-videos", async (request, response, next) => {
+app.get("/videos", async (request, response, next) => {
   if (!INDEX_ID) return Error;
-
-  console.log("🚀 > app.get > request.query=", request.query);
 
   const params = {
     page_limit: request.query.page_limit,
@@ -46,6 +44,25 @@ app.get("/get-videos", async (request, response, next) => {
   } catch (error) {
     const status = error.response?.status || 500;
     const message = error.response?.data?.message || "Error Getting Videos";
+    return next({ status, message });
+  }
+});
+
+/** Get a video of an index */
+app.get("/videos/:videoId", async (request, response, next) => {
+  const videoId = request.params.videoId;
+
+  try {
+    const options = {
+      method: "GET",
+      url: `${API_BASE_URL}/indexes/${INDEX_ID}/videos/${videoId}`,
+      headers: { ...HEADERS },
+    };
+    const apiResponse = await axios.request(options);
+    response.json(apiResponse.data);
+  } catch (error) {
+    const status = error.response?.status || 500;
+    const message = error.response?.data?.message || "Error Getting a Video";
     return next({ status, message });
   }
 });

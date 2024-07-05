@@ -11,6 +11,7 @@ const carouselImg = document.getElementById("carousel-image");
 const colorLabel = document.getElementById("color-label");
 const prevButton = document.getElementById("prev");
 const nextButton = document.getElementById("next");
+const VideoList = document.getElementById("video-list");
 
 function updateCarousel() {
   carouselImg.src = images[currImgIndex].src;
@@ -29,17 +30,17 @@ nextButton.addEventListener("click", () => {
 });
 
 const SERVER = "http://localhost:5001/";
+const PAGE_LIMIT = 1;
 
 async function getVideos() {
   console.log("GET VIDEOS!");
   try {
-    const response = await fetch(`${SERVER}get-videos?page_limit=1`);
+    const response = await fetch(`${SERVER}videos?page_limit=${PAGE_LIMIT}`);
     if (!response.ok) {
       throw new Error("Network response was not ok" + response.statusText);
     }
     const data = await response.json();
     console.log("🚀 > getVideos > data=", data);
-
     return data;
   } catch (error) {
     console.error("Error fetching videos:", error);
@@ -47,7 +48,35 @@ async function getVideos() {
   }
 }
 
+async function getVideo(videoId) {
+  console.log("GET VIDEO!");
+  try {
+    const response = await fetch(`${SERVER}videos/${videoId}`);
+    if (!response.ok) {
+      throw new Error("Network response was not ok" + response.statusText);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching videos:", error);
+    return error;
+  }
+}
+
+async function getVideosDetails() {
+  const videos = await getVideos();
+  console.log("🚀 > getVideosDetails > videos=", videos);
+
+  if (videos) {
+    const videosDetail = await Promise.all(
+      videos.data.map((video) => {
+        return getVideo(video._id);
+      })
+    );
+    console.log("🚀 > getVideosDetails > videosDetail=", videosDetail)
+  }
+}
+
 /** Initial update */
 updateCarousel();
-
-getVideos();
+getVideosDetails();
