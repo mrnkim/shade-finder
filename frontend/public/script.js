@@ -7,7 +7,6 @@ const images = [
 
 let currImgIndex = 0;
 
-//elements
 const carouselImg = document.getElementById("carousel-image");
 const colorLabel = document.getElementById("color-label");
 const prevButton = document.getElementById("prev");
@@ -29,7 +28,26 @@ nextButton.addEventListener("click", () => {
   updateCarousel();
 });
 
-function getVideos() {}
+const SERVER = "http://localhost:5001/";
 
-// Initial update
+async function getVideos() {
+  console.log("GET VIDEOS!");
+  try {
+    const response = await fetch(`${SERVER}get-videos?page_limit=1`);
+    if (!response.ok) {
+      throw new Error("Network response was not ok" + response.statusText);
+    }
+    const data = await response.json();
+    console.log("🚀 > getVideos > data=", data);
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching videos:", error);
+    return error;
+  }
+}
+
+/** Initial update */
 updateCarousel();
+
+getVideos();
