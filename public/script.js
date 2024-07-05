@@ -1,8 +1,8 @@
 const images = [
-  { src: "./berry.jpg", label: "Berry Colors" },
-  { src: "./orange.png", label: "Orange Colors" },
-  { src: "./blue.png", label: "Blue Colors" },
-  { src: "./green.png", label: "Green Colors" },
+  { src: "./images/berry.jpg", label: "Berry Colors" },
+  { src: "./images/orange.png", label: "Orange Colors" },
+  { src: "./images/blue.png", label: "Blue Colors" },
+  { src: "./images/green.png", label: "Green Colors" },
 ];
 
 let currImgIndex = 0;
@@ -28,6 +28,8 @@ nextButton.addEventListener("click", () => {
   currImgIndex = currImgIndex === images.length - 1 ? 0 : currImgIndex + 1;
   updateCarousel();
 });
+
+function getVideos() {}
 
 // Initial update
 updateCarousel();
