@@ -1,8 +1,8 @@
 const images = [
-  { src: "./images/berry.jpg", label: "Berry Colors" },
-  { src: "./images/orange.png", label: "Orange Colors" },
-  { src: "./images/blue.png", label: "Blue Colors" },
-  { src: "./images/green.png", label: "Green Colors" },
+  { src: "./images/berry.jpg", label: "Berry Shades" },
+  { src: "./images/orange.png", label: "Orange Shades" },
+  { src: "./images/blue.png", label: "Blue Shades" },
+  { src: "./images/green.png", label: "Green Shades" },
 ];
 
 let currImgIndex = 0;
