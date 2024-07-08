@@ -84,10 +84,10 @@ async function showVideos() {
     videos.forEach((video) => {
       const videoContainer = document.createElement("div");
       videoContainer.classList.add(
-        "flex",
+        "flex-col",
         "justify-center",
         "items-center",
-        "p-5",
+        "p-3",
         "border"
       );
 
@@ -99,7 +99,13 @@ async function showVideos() {
       iframeElement.allow =
         "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
       iframeElement.allowFullscreen = true;
+
+
       videoContainer.appendChild(iframeElement);
+
+      const videoTitle = document.createElement("div");
+      videoTitle.innerHTML = `<p class="text-center mb-2 text-xs">${video.metadata.filename}</p>`;
+      videoContainer.appendChild(videoTitle);
 
       videoList.appendChild(videoContainer);
     });
