@@ -11,7 +11,7 @@ const carouselImg = document.getElementById("carousel-image");
 const colorLabel = document.getElementById("color-label");
 const prevButton = document.getElementById("prev");
 const nextButton = document.getElementById("next");
-const VideoList = document.getElementById("video-list");
+const videoList = document.getElementById("video-list");
 
 function updateCarousel() {
   carouselImg.src = images[currImgIndex].src;
@@ -30,7 +30,7 @@ nextButton.addEventListener("click", () => {
 });
 
 const SERVER = "http://localhost:5001/";
-const PAGE_LIMIT = 1;
+const PAGE_LIMIT = 12;
 
 async function getVideos() {
   console.log("GET VIDEOS!");
@@ -63,9 +63,8 @@ async function getVideo(videoId) {
   }
 }
 
-async function getVideosDetails() {
+async function getVideoOfVideos() {
   const videos = await getVideos();
-  console.log("🚀 > getVideosDetails > videos=", videos);
 
   if (videos) {
     const videosDetail = await Promise.all(
@@ -73,10 +72,40 @@ async function getVideosDetails() {
         return getVideo(video._id);
       })
     );
-    console.log("🚀 > getVideosDetails > videosDetail=", videosDetail)
+    return videosDetail;
+  }
+}
+
+async function showVideos() {
+  const videos = await getVideoOfVideos();
+  console.log("🚀 > showVideos > videos=", videos);
+
+  if (videos) {
+    videos.forEach((video) => {
+      const videoContainer = document.createElement("div");
+      videoContainer.classList.add(
+        "flex",
+        "justify-center",
+        "items-center",
+        "p-5",
+        "border"
+      );
+
+      const iframeElement = document.createElement("iframe");
+      iframeElement.width = 220;
+      iframeElement.height = 140;
+      iframeElement.src = video.source.url.replace("watch?v=", "embed/");
+      iframeElement.frameBorder = 0;
+      iframeElement.allow =
+        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+      iframeElement.allowFullscreen = true;
+      videoContainer.appendChild(iframeElement);
+
+      videoList.appendChild(videoContainer);
+    });
   }
 }
 
 /** Initial update */
 updateCarousel();
-getVideosDetails();
+showVideos();

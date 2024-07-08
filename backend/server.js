@@ -36,7 +36,7 @@ app.get("/videos", async (request, response, next) => {
       method: "GET",
       url: `${API_BASE_URL}/indexes/${INDEX_ID}/videos`,
       headers: { ...HEADERS },
-      data: { params },
+      params: params,
     };
     console.log("🚀 > app.get > options=", options);
     const apiResponse = await axios.request(options);
