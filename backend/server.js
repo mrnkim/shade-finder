@@ -28,8 +28,8 @@ app.get("/videos", async (request, response, next) => {
 
   const params = {
     page_limit: request.query.page_limit,
+    page: request.query.page,
   };
-  console.log("🚀 > app.get > params=", params);
 
   try {
     const options = {
@@ -38,7 +38,6 @@ app.get("/videos", async (request, response, next) => {
       headers: { ...HEADERS },
       params: params,
     };
-    console.log("🚀 > app.get > options=", options);
     const apiResponse = await axios.request(options);
     response.json(apiResponse.data);
   } catch (error) {

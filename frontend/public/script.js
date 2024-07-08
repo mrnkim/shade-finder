@@ -12,6 +12,7 @@ const colorLabel = document.getElementById("color-label");
 const prevButton = document.getElementById("prev");
 const nextButton = document.getElementById("next");
 const videoList = document.getElementById("video-list");
+const pagination = document.getElementById("pagination");
 
 function updateCarousel() {
   carouselImg.src = images[currImgIndex].src;
@@ -19,7 +20,6 @@ function updateCarousel() {
 }
 
 prevButton.addEventListener("click", () => {
-  console.log("prev button clicked");
   currImgIndex = currImgIndex === 0 ? images.length - 1 : currImgIndex - 1;
   updateCarousel();
 });
@@ -32,15 +32,15 @@ nextButton.addEventListener("click", () => {
 const SERVER = "http://localhost:5001/";
 const PAGE_LIMIT = 12;
 
-async function getVideos() {
-  console.log("GET VIDEOS!");
+async function getVideos(page = 1) {
   try {
-    const response = await fetch(`${SERVER}videos?page_limit=${PAGE_LIMIT}`);
+    const response = await fetch(
+      `${SERVER}videos?page_limit=${PAGE_LIMIT}&page=${page}`
+    );
     if (!response.ok) {
       throw new Error("Network response was not ok" + response.statusText);
     }
     const data = await response.json();
-    console.log("🚀 > getVideos > data=", data);
     return data;
   } catch (error) {
     console.error("Error fetching videos:", error);
@@ -49,7 +49,6 @@ async function getVideos() {
 }
 
 async function getVideo(videoId) {
-  console.log("GET VIDEO!");
   try {
     const response = await fetch(`${SERVER}videos/${videoId}`);
     if (!response.ok) {
@@ -63,8 +62,8 @@ async function getVideo(videoId) {
   }
 }
 
-async function getVideoOfVideos() {
-  const videos = await getVideos();
+async function getVideoOfVideos(page = 1) {
+  const videos = await getVideos(page);
 
   if (videos) {
     const videosDetail = await Promise.all(
@@ -72,16 +71,17 @@ async function getVideoOfVideos() {
         return getVideo(video._id);
       })
     );
-    return videosDetail;
+    return { videosDetail, pageInfo: videos.page_info };
   }
 }
 
-async function showVideos() {
-  const videos = await getVideoOfVideos();
-  console.log("🚀 > showVideos > videos=", videos);
+async function showVideos(page = 1) {
+  const { videosDetail, pageInfo } = await getVideoOfVideos(page);
 
-  if (videos) {
-    videos.forEach((video) => {
+  if (videosDetail) {
+    videoList.innerHTML = ""; // Clear the current videos
+
+    videosDetail.forEach((video) => {
       const videoContainer = document.createElement("div");
       videoContainer.classList.add(
         "flex-col",
@@ -100,7 +100,6 @@ async function showVideos() {
         "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
       iframeElement.allowFullscreen = true;
 
-
       videoContainer.appendChild(iframeElement);
 
       const videoTitle = document.createElement("div");
@@ -109,6 +108,21 @@ async function showVideos() {
 
       videoList.appendChild(videoContainer);
     });
+
+    /** Add pagination buttons */
+    pagination.innerHTML = "";
+    for (let i = 1; i <= pageInfo.total_page; i++) {
+      const pageButton = document.createElement("button");
+      pageButton.textContent = i;
+      pageButton.classList.add("bg-lime-100", "px-3", "py-1", "rounded");
+      if (i === page) {
+        pageButton.classList.remove("bg-lime-100");
+        pageButton.classList.add("bg-lime-400");
+        pageButton.disabled = true;
+      }
+      pageButton.addEventListener("click", () => showVideos(i));
+      pagination.appendChild(pageButton);
+    }
   }
 }
 
