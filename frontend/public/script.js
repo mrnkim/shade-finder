@@ -63,15 +63,16 @@ async function getVideo(videoId) {
 }
 
 async function getVideoOfVideos(page = 1) {
-  const videos = await getVideos(page);
+  const videosResponse = await getVideos(page);
 
-  if (videos) {
+  if (videosResponse.videos.length > 0) {
     const videosDetail = await Promise.all(
-      videos.data.map((video) => {
-        return getVideo(video._id);
+      videosResponse.videos.map((video) => {
+        return getVideo(video.id);
       })
     );
-    return { videosDetail, pageInfo: videos.page_info };
+
+    return { videosDetail, pageInfo: videosResponse.page_info };
   }
 }
 
@@ -111,7 +112,7 @@ async function showVideos(page = 1) {
 
     /** Add pagination buttons */
     pagination.innerHTML = "";
-    for (let i = 1; i <= pageInfo.total_page; i++) {
+    for (let i = 1; i <= pageInfo.totalPage; i++) {
       const pageButton = document.createElement("button");
       pageButton.textContent = i;
       pageButton.classList.add("bg-lime-100", "px-3", "py-1", "rounded");

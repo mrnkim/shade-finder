@@ -2,10 +2,12 @@ const express = require("express");
 const axios = require("axios");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const { TwelveLabs } = require("twelvelabs-js");
 
 dotenv.config();
 
 const app = express();
+
 app.use(express.json());
 app.use(cors());
 app.use(express.static("public"));
@@ -17,6 +19,8 @@ const INDEX_ID = process.env.TWELVE_LABS_INDEX_ID;
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
+const client = new TwelveLabs({ apiKey: API_KEY });
+
 const HEADERS = {
   "Content-Type": "application/json",
   "x-api-key": API_KEY,
@@ -24,22 +28,24 @@ const HEADERS = {
 
 /** Get videos */
 app.get("/videos", async (request, response, next) => {
-  if (!INDEX_ID) return Error;
-
-  const params = {
-    page_limit: request.query.page_limit,
-    page: request.query.page,
-  };
-
   try {
-    const options = {
-      method: "GET",
-      url: `${API_BASE_URL}/indexes/${INDEX_ID}/videos`,
-      headers: { ...HEADERS },
-      params: params,
+    const index = await client.index.retrieve(`${INDEX_ID}`);
+    const pagination = await client.index.video.listPagination(index.id, {
+      pageLimit: request.query.page_limit,
+      page: request.query.page,
+    });
+
+    const videos = pagination.data.map((video) => ({
+      id: video.id,
+      metadata: video.metadata,
+    }));
+
+    const responseData = {
+      videos,
+      page_info: pagination.pageInfo,
     };
-    const apiResponse = await axios.request(options);
-    response.json(apiResponse.data);
+
+    response.json(responseData);
   } catch (error) {
     const status = error.response?.status || 500;
     const message = error.response?.data?.message || "Error Getting Videos";
@@ -57,7 +63,9 @@ app.get("/videos/:videoId", async (request, response, next) => {
       url: `${API_BASE_URL}/indexes/${INDEX_ID}/videos/${videoId}`,
       headers: { ...HEADERS },
     };
+
     const apiResponse = await axios.request(options);
+
     response.json(apiResponse.data);
   } catch (error) {
     const status = error.response?.status || 500;
