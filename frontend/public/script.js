@@ -13,6 +13,7 @@ const prevButton = document.getElementById("prev");
 const nextButton = document.getElementById("next");
 const videoList = document.getElementById("video-list");
 const pagination = document.getElementById("pagination");
+const searchButton = document.getElementById("search");
 
 function updateCarousel() {
   carouselImg.src = images[currImgIndex].src;
@@ -75,6 +76,27 @@ async function getVideoOfVideos(page = 1) {
     return { videosDetail, pageInfo: videosResponse.page_info };
   }
 }
+
+async function searchByImage() {
+  const imageSrc = carouselImg.src.split("/").pop();
+  console.log(`Searching for image: ${imageSrc}`); // Log the image source
+
+  try {
+    const response = await fetch(
+      `${SERVER}search?imageSrc=${encodeURIComponent(imageSrc)}`
+    );
+    if (!response.ok) {
+      throw new Error("Network response was not ok" + response.statusText);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error searching videos:", error);
+    return error;
+  }
+}
+
+searchButton.addEventListener("click", () => searchByImage());
 
 async function showVideos(page = 1) {
   const { videosDetail, pageInfo } = await getVideoOfVideos(page);
