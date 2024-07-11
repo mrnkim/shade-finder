@@ -12,7 +12,10 @@ const colorLabel = document.getElementById("color-label");
 const prevButton = document.getElementById("prev");
 const nextButton = document.getElementById("next");
 const videoList = document.getElementById("video-list");
-const pagination = document.getElementsByClassName("pagination");
+const videoListPagination = document.getElementById("video-list-pagination");
+const searchResultPagination = document.getElementById(
+  "search-result-pagination"
+);
 const searchButton = document.getElementById("search");
 const videoListContainer = document.getElementById("video-list-container");
 const searchResultContainer = document.getElementById(
@@ -94,7 +97,6 @@ async function searchByImage() {
       throw new Error("Network response was not ok" + response.statusText);
     }
     const data = await response.json();
-    console.log("🚀 > searchByImage > data=", data);
     return data;
   } catch (error) {
     console.error("Error searching videos:", error);
@@ -112,9 +114,6 @@ searchButton.addEventListener("click", async () => {
 
 async function showSearchResults(page = 1) {
   const { searchResults, pageInfo } = await searchByImage(page);
-  console.log("🚀 > showSearchResults > pageInfo=", pageInfo);
-  console.log("🚀 > showSearchResults > searchResults=", searchResults);
-
   if (searchResults) {
     searchResultList.innerHTML = ""; // Clear the current videos
 
@@ -199,7 +198,7 @@ async function showVideos(page = 1) {
     });
 
     /** Add pagination buttons */
-    pagination.innerHTML = "";
+    videoListPagination.innerHTML = "";
     for (let i = 1; i <= pageInfo.totalPage; i++) {
       const pageButton = document.createElement("button");
       pageButton.textContent = i;
@@ -210,7 +209,7 @@ async function showVideos(page = 1) {
         pageButton.disabled = true;
       }
       pageButton.addEventListener("click", () => showVideos(i));
-      pagination.appendChild(pageButton);
+      videoListPagination.appendChild(pageButton);
     }
   }
 }

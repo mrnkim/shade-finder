@@ -55,6 +55,7 @@ app.get("/videos", async (request, response, next) => {
   }
 });
 
+//TODO: change to SDK
 /** Get a video of an index */
 app.get("/videos/:videoId", async (request, response, next) => {
   const videoId = request.params.videoId;
@@ -98,11 +99,10 @@ app.get("/search", async (request, response, next) => {
       queryMediaType: "image",
       options: ["visual"],
       threshold: "high",
-      page_limit: "12",
+      pageLimit: "12",
+
       // adjust_confidence_level: "0.7",
     });
-    console.log("🚀 > app.get > imageResult=", imageResult);
-
     // Inspect the structure of imageResult
     const searchResults = imageResult.data;
 
@@ -111,21 +111,6 @@ app.get("/search", async (request, response, next) => {
       pageInfo: imageResult.pageInfo,
     };
     response.json(responseData);
-    // let nextPageDataByImage = await imageResult.next();
-    // while (nextPageDataByImage !== null) {
-    //   nextPageDataByImage.forEach((clip) => {
-    //     console.log(
-    //       `  score=${clip.score} start=${clip.start} end=${clip.end} confidence=${clip.confidence}`
-    //     );
-    //     searchResults.push({
-    //       score: clip.score,
-    //       start: clip.start,
-    //       end: clip.end,
-    //       confidence: clip.confidence,
-    //     });
-    //   });
-    //   nextPageDataByImage = await imageResult.next();
-    // }
   } catch (error) {
     console.error("Error searching for image:", error);
     response.status(500).send("Internal Server Error");
