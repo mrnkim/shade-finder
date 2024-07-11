@@ -18,6 +18,9 @@ const PORT = process.env.PORT;
 const API_BASE_URL = "https://api.twelvelabs.io/v1.2";
 const API_KEY = process.env.TWELVE_LABS_API_KEY;
 const INDEX_ID = process.env.TWELVE_LABS_INDEX_ID;
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
 const client = new TwelveLabs({ apiKey: API_KEY });
 
 const HEADERS = {
@@ -82,6 +85,7 @@ app.get("/search", async (request, response, next) => {
       "../frontend/public/images",
       imageSrc
     );
+
     // Check if the image file exists
     if (!fs.existsSync(imagePath)) {
       console.error("Image not found at path:", imagePath);
@@ -94,39 +98,34 @@ app.get("/search", async (request, response, next) => {
       queryMediaType: "image",
       options: ["visual"],
       threshold: "high",
+      page_limit: "12",
       // adjust_confidence_level: "0.7",
     });
+    console.log("🚀 > app.get > imageResult=", imageResult);
+
     // Inspect the structure of imageResult
-    const searchResults = [];
-    imageResult.data.forEach((clip) => {
-      console.log(
-        `  score=${clip.score} start=${clip.start} end=${clip.end} confidence=${clip.confidence}`
-      );
-      searchResults.push({
-        score: clip.score,
-        start: clip.start,
-        end: clip.end,
-        confidence: clip.confidence,
-      });
-    });
+    const searchResults = imageResult.data;
 
-    let nextPageDataByImage = await imageResult.next();
-    while (nextPageDataByImage !== null) {
-      nextPageDataByImage.forEach((clip) => {
-        console.log(
-          `  score=${clip.score} start=${clip.start} end=${clip.end} confidence=${clip.confidence}`
-        );
-        searchResults.push({
-          score: clip.score,
-          start: clip.start,
-          end: clip.end,
-          confidence: clip.confidence,
-        });
-      });
-      nextPageDataByImage = await imageResult.next();
-    }
-
-    response.json(searchResults);
+    const responseData = {
+      searchResults,
+      pageInfo: imageResult.pageInfo,
+    };
+    response.json(responseData);
+    // let nextPageDataByImage = await imageResult.next();
+    // while (nextPageDataByImage !== null) {
+    //   nextPageDataByImage.forEach((clip) => {
+    //     console.log(
+    //       `  score=${clip.score} start=${clip.start} end=${clip.end} confidence=${clip.confidence}`
+    //     );
+    //     searchResults.push({
+    //       score: clip.score,
+    //       start: clip.start,
+    //       end: clip.end,
+    //       confidence: clip.confidence,
+    //     });
+    //   });
+    //   nextPageDataByImage = await imageResult.next();
+    // }
   } catch (error) {
     console.error("Error searching for image:", error);
     response.status(500).send("Internal Server Error");

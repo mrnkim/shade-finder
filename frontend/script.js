@@ -12,8 +12,13 @@ const colorLabel = document.getElementById("color-label");
 const prevButton = document.getElementById("prev");
 const nextButton = document.getElementById("next");
 const videoList = document.getElementById("video-list");
-const pagination = document.getElementById("pagination");
+const pagination = document.getElementsByClassName("pagination");
 const searchButton = document.getElementById("search");
+const videoListContainer = document.getElementById("video-list-container");
+const searchResultContainer = document.getElementById(
+  "search-result-container"
+);
+const searchResultList = document.getElementById("search-result-list");
 
 function updateCarousel() {
   carouselImg.src = images[currImgIndex].src;
@@ -89,6 +94,7 @@ async function searchByImage() {
       throw new Error("Network response was not ok" + response.statusText);
     }
     const data = await response.json();
+    console.log("🚀 > searchByImage > data=", data);
     return data;
   } catch (error) {
     console.error("Error searching videos:", error);
@@ -96,7 +102,67 @@ async function searchByImage() {
   }
 }
 
-searchButton.addEventListener("click", () => searchByImage());
+searchButton.addEventListener("click", async () => {
+  videoListContainer.classList.add("hidden");
+  searchResultContainer.classList.remove("hidden");
+  searchResultContainer.classList.add("visible");
+
+  showSearchResults();
+});
+
+async function showSearchResults(page = 1) {
+  const { searchResults, pageInfo } = await searchByImage(page);
+  console.log("🚀 > showSearchResults > pageInfo=", pageInfo);
+  console.log("🚀 > showSearchResults > searchResults=", searchResults);
+
+  if (searchResults) {
+    searchResultList.innerHTML = ""; // Clear the current videos
+
+    searchResults.forEach((result) => {
+      const videoContainer = document.createElement("div");
+      videoContainer.classList.add(
+        "flex-col",
+        "justify-center",
+        "items-center",
+        "p-3",
+        "border"
+      );
+
+      const iframeElement = document.createElement("iframe");
+      iframeElement.width = 220;
+      iframeElement.height = 140;
+      iframeElement.srcdoc = `
+      <style>
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100%; }
+        img { max-width: 100%; max-height: 100%; }
+      </style>
+      <img src="${result.thumbnailUrl}" alt="Video Thumbnail" />
+    `; // iframeElement.src = result.source.url.replace("watch?v=", "embed/");
+      iframeElement.frameBorder = 0;
+      iframeElement.allow =
+        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+      iframeElement.allowFullscreen = true;
+
+      videoContainer.appendChild(iframeElement);
+
+      const videoTitle = document.createElement("div");
+      // videoTitle.innerHTML = `<p class="text-center mb-2 text-xs">${result.metadata.filename}</p>`;
+      videoContainer.appendChild(videoTitle);
+
+      searchResultList.appendChild(videoContainer);
+    });
+
+    /** Add pagination buttons */
+    // pagination.innerHTML = "";
+    // if (pageInfo.nextPageToken) {
+    //   const pageButton = document.createElement("button");
+    //   pageButton.textContent = "Show More";
+    //   pageButton.classList.add("bg-lime-100", "px-3", "py-1", "rounded");
+    //   // pageButton.addEventListener("click", () => showVideos(i));
+    //   pagination.appendChild(pageButton);
+    // }
+  }
+}
 
 async function showVideos(page = 1) {
   const { videosDetail, pageInfo } = await getVideoOfVideos(page);
