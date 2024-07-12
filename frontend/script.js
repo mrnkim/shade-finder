@@ -6,6 +6,7 @@ const images = [
 ];
 
 let currImgIndex = 0;
+let nextPageToken;
 
 const carouselImg = document.getElementById("carousel-image");
 const colorLabel = document.getElementById("color-label");
@@ -97,6 +98,7 @@ async function searchByImage() {
       throw new Error("Network response was not ok" + response.statusText);
     }
     const data = await response.json();
+    nextPageToken = data.pageInfo.nextPageToken;
     return data;
   } catch (error) {
     console.error("Error searching videos:", error);
@@ -107,59 +109,89 @@ async function searchByImage() {
 searchButton.addEventListener("click", async () => {
   videoListContainer.classList.add("hidden");
   searchResultContainer.classList.remove("hidden");
-  searchResultContainer.classList.add("visible");
-
-  showSearchResults();
+  // searchResultContainer.classList.add("visible");
+  const { searchResults } = await searchByImage();
+  if (searchResults) {
+    showSearchResults(searchResults);
+  }
 });
 
-async function showSearchResults(page = 1) {
-  const { searchResults, pageInfo } = await searchByImage(page);
-  if (searchResults) {
-    searchResultList.innerHTML = ""; // Clear the current videos
+async function showSearchResults(searchResults) {
+  searchResultPagination.innerHTML = "";
 
-    searchResults.forEach((result) => {
-      const videoContainer = document.createElement("div");
-      videoContainer.classList.add(
-        "flex-col",
-        "justify-center",
-        "items-center",
-        "p-3",
-        "border"
-      );
+  searchResults.forEach((result) => {
+    const videoContainer = document.createElement("div");
+    videoContainer.classList.add(
+      "flex-col",
+      "justify-center",
+      "items-center",
+      "p-3",
+      "border"
+    );
 
-      const iframeElement = document.createElement("iframe");
-      iframeElement.width = 220;
-      iframeElement.height = 140;
-      iframeElement.srcdoc = `
+    const iframeElement = document.createElement("iframe");
+    iframeElement.width = 220;
+    iframeElement.height = 140;
+    iframeElement.srcdoc = `
       <style>
         body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100%; }
         img { max-width: 100%; max-height: 100%; }
       </style>
       <img src="${result.thumbnailUrl}" alt="Video Thumbnail" />
     `; // iframeElement.src = result.source.url.replace("watch?v=", "embed/");
-      iframeElement.frameBorder = 0;
-      iframeElement.allow =
-        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-      iframeElement.allowFullscreen = true;
+    iframeElement.frameBorder = 0;
+    iframeElement.allow =
+      "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframeElement.allowFullscreen = true;
 
-      videoContainer.appendChild(iframeElement);
+    videoContainer.appendChild(iframeElement);
 
-      const videoTitle = document.createElement("div");
-      // videoTitle.innerHTML = `<p class="text-center mb-2 text-xs">${result.metadata.filename}</p>`;
-      videoContainer.appendChild(videoTitle);
+    const videoTitle = document.createElement("div");
+    // videoTitle.innerHTML = `<p class="text-center mb-2 text-xs">${result.metadata.filename}</p>`;
+    videoContainer.appendChild(videoTitle);
 
-      searchResultList.appendChild(videoContainer);
+    searchResultList.appendChild(videoContainer);
+  });
+
+  /** Add pagination buttons */
+
+  if (nextPageToken) {
+    const pageButton = document.createElement("button");
+    pageButton.textContent = "Show More";
+    pageButton.classList.add("bg-lime-100", "px-3", "py-1", "rounded");
+    pageButton.addEventListener("click", async () => {
+      const nextPageResults = await getNextSearchResults(nextPageToken);
+
+      showSearchResults(nextPageResults.searchResults);
+      nextPageToken = nextPageResults.pageInfo.nextPageToken || null;
+      if (!nextPageToken) {
+        searchResultPagination.innerHTML = "";
+        const backToTopButton = document.createElement("button");
+        backToTopButton.textContent = "Back to Top";
+        backToTopButton.classList.add("bg-lime-100", "px-3", "py-1", "rounded");
+        backToTopButton.addEventListener("click", async () => {
+          searchButton.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        searchResultPagination.appendChild(backToTopButton);
+      }
+
     });
 
-    /** Add pagination buttons */
-    // pagination.innerHTML = "";
-    // if (pageInfo.nextPageToken) {
-    //   const pageButton = document.createElement("button");
-    //   pageButton.textContent = "Show More";
-    //   pageButton.classList.add("bg-lime-100", "px-3", "py-1", "rounded");
-    //   // pageButton.addEventListener("click", () => showVideos(i));
-    //   pagination.appendChild(pageButton);
-    // }
+    searchResultPagination.appendChild(pageButton);
+  }
+}
+
+async function getNextSearchResults(nextPageToken) {
+  try {
+    const response = await fetch(`${SERVER}search/${nextPageToken}`);
+    if (!response.ok) {
+      throw new Error("Network response was not ok" + response.statusText);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error searching videos:", error);
+    return error;
   }
 }
 

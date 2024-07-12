@@ -31,8 +31,7 @@ const HEADERS = {
 /** Get videos */
 app.get("/videos", async (request, response, next) => {
   try {
-    const index = await client.index.retrieve(`${INDEX_ID}`);
-    const pagination = await client.index.video.listPagination(index.id, {
+    const pagination = await client.index.video.listPagination(INDEX_ID, {
       pageLimit: request.query.page_limit,
       page: request.query.page,
     });
@@ -100,9 +99,8 @@ app.get("/search", async (request, response, next) => {
       options: ["visual"],
       threshold: "high",
       pageLimit: "12",
-
-      // adjust_confidence_level: "0.7",
     });
+
     // Inspect the structure of imageResult
     const searchResults = imageResult.data;
 
@@ -114,5 +112,29 @@ app.get("/search", async (request, response, next) => {
   } catch (error) {
     console.error("Error searching for image:", error);
     response.status(500).send("Internal Server Error");
+  }
+});
+
+/** 1. [Backend] Build get search (page token) function in server
+ *  2. [Frontend] Button clicked -> retreive and concate new search results
+ */
+
+/** Get search results of a specific page */
+app.get("/search/:pageToken", async (request, response, next) => {
+  try {
+    let searchResults = await client.search.byPageToken(
+      `${request.params.pageToken}`
+    );
+
+    const responseData = {
+      searchResults: searchResults.data,
+      pageInfo: searchResults.pageInfo,
+    };
+
+    response.json(responseData);
+  } catch (error) {
+    const status = error.response?.status || 500;
+    const message = error.response?.data?.message || "Error Getting Videos";
+    return next({ status, message });
   }
 });
