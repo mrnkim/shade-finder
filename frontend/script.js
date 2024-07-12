@@ -7,6 +7,7 @@ const images = [
 
 let currImgIndex = 0;
 let nextPageToken;
+const videoCache = new Map();
 
 const carouselImg = document.getElementById("carousel-image");
 const colorLabel = document.getElementById("color-label");
@@ -59,6 +60,10 @@ async function getVideos(page = 1) {
 }
 
 async function getVideo(videoId) {
+  if (videoCache.has(videoId)) {
+    return videoCache.get(videoId);
+  }
+
   try {
     const response = await fetch(`${SERVER}videos/${videoId}`);
     if (!response.ok) {
@@ -117,7 +122,25 @@ searchButton.addEventListener("click", async () => {
 });
 
 async function showSearchResults(searchResults) {
+  console.log("🚀 > showSearchResults > searchResults=", searchResults);
   searchResultPagination.innerHTML = "";
+
+  // Fetch video details for each search result and store them
+  await Promise.all(
+    searchResults.map(async (result) => {
+      try {
+        const videoDetail = await getVideo(result.videoId);
+        result.videoDetail = videoDetail;
+      } catch (error) {
+        console.error(
+          `Error fetching video details for ${result.videoId}:`,
+          error
+        );
+      }
+    })
+  );
+
+  console.log("🚀 > searchResults.forEach > searchResults=", searchResults);
 
   searchResults.forEach((result) => {
     const videoContainer = document.createElement("div");
@@ -129,28 +152,57 @@ async function showSearchResults(searchResults) {
       "border"
     );
 
+    // Create a container for the thumbnail
+    const thumbnailContainer = document.createElement("div");
+
+    // Create an image element for the thumbnail
+    const thumbnailImage = document.createElement("img");
+    thumbnailImage.src = result.thumbnailUrl;
+    thumbnailImage.alt = "Video Thumbnail";
+    thumbnailImage.style.maxWidth = "100%";
+    thumbnailImage.style.maxHeight = "100%";
+    thumbnailImage.style.cursor = "pointer"; // Optional: Add cursor pointer for interaction
+
+    // Append the thumbnail image to its container
+    thumbnailContainer.appendChild(thumbnailImage);
+
+    // Append the thumbnail container to the main video container
+    videoContainer.appendChild(thumbnailContainer);
+
+    // Create a container for the iframe element (video player)
+    const iframeContainer = document.createElement("div");
+    iframeContainer.style.display = "none"; // Initially hide the iframe
+
     const iframeElement = document.createElement("iframe");
     iframeElement.width = 220;
     iframeElement.height = 140;
-    iframeElement.srcdoc = `
-      <style>
-        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100%; }
-        img { max-width: 100%; max-height: 100%; }
-      </style>
-      <img src="${result.thumbnailUrl}" alt="Video Thumbnail" />
-    `; // iframeElement.src = result.source.url.replace("watch?v=", "embed/");
+
+    const startSeconds = Math.round(result.start);
+    const endSeconds = Math.round(result.end);
+
+    iframeElement.src = `${result.videoDetail.source.url.replace(
+      "watch?v=",
+      "embed/"
+    )}?start=${startSeconds}&end=${endSeconds}`;
     iframeElement.frameBorder = 0;
     iframeElement.allow =
       "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     iframeElement.allowFullscreen = true;
+    iframeContainer.appendChild(iframeElement);
+    videoContainer.appendChild(iframeContainer);
 
-    videoContainer.appendChild(iframeElement);
-
-    const videoTitle = document.createElement("div");
-    // videoTitle.innerHTML = `<p class="text-center mb-2 text-xs">${result.metadata.filename}</p>`;
-    videoContainer.appendChild(videoTitle);
+    // Add event listener to toggle visibility of thumbnail and iframe on click
+    thumbnailImage.addEventListener("click", () => {
+      thumbnailContainer.style.display = "none";
+      iframeContainer.style.display = "block";
+      iframeElement.src += "&autoplay=1";
+    });
 
     searchResultList.appendChild(videoContainer);
+
+    const videoTitle = document.createElement("div");
+    videoTitle.innerHTML = `<p class="text-center mb-2 text-xs">${result.videoDetail.metadata.filename}</p>`;
+    videoContainer.appendChild(videoTitle);
   });
 
   /** Add pagination buttons */
@@ -174,7 +226,6 @@ async function showSearchResults(searchResults) {
         });
         searchResultPagination.appendChild(backToTopButton);
       }
-
     });
 
     searchResultPagination.appendChild(pageButton);
