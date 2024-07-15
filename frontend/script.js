@@ -175,12 +175,18 @@ async function showSearchResults(searchResults) {
       "justify-center",
       "items-center",
       "p-3",
-      "border",
-      "gap-3"
+      "gap-1",
+      "my-4"
     );
 
     const videoTitle = document.createElement("div");
-    videoTitle.innerHTML = `<p class="text-center mb-2 text-xs">${result.videoDetail.metadata.filename}</p>`;
+    videoTitle.classList.add(
+      "w-full",
+      "overflow-hidden",
+      "whitespace-nowrap",
+      "text-ellipsis"
+    );
+    videoTitle.innerHTML = `<p class="text-center mb-2 text-xs truncate">${result.videoDetail.metadata.filename}</p>`;
 
     // Create a container for the thumbnail
     const thumbnailContainer = document.createElement("div");
@@ -211,7 +217,6 @@ async function showSearchResults(searchResults) {
       "watch?v=",
       "embed/"
     )}?start=${startSeconds}&end=${endSeconds}`;
-    iframeElement.frameBorder = 0;
     iframeElement.allow =
       "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     iframeElement.allowFullscreen = true;
@@ -340,15 +345,13 @@ async function showVideos(page = 1) {
         "flex-col",
         "justify-center",
         "items-center",
-        "p-3",
-        "border"
+        "p-3"
       );
 
       const iframeElement = document.createElement("iframe");
       iframeElement.width = 220;
       iframeElement.height = 140;
       iframeElement.src = video.source.url.replace("watch?v=", "embed/");
-      iframeElement.frameBorder = 0;
       iframeElement.allow =
         "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
       iframeElement.allowFullscreen = true;
