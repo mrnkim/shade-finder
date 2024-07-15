@@ -111,18 +111,45 @@ async function searchByImage() {
   }
 }
 
+function showLoadingSpinner() {
+  const loadingSpinnerContainer = document.createElement("div");
+  loadingSpinnerContainer.classList.add(
+    "flex",
+    "justify-center",
+    "items-center"
+  );
+  const loadingSpinner = document.createElement("img");
+  loadingSpinner.src = "./LoadingSpinner.svg";
+  loadingSpinner.alt = "loading spinner";
+  loadingSpinner.classList.add("animate-spin", "h-8", "w-8"); // Adjust size as needed
+  loadingSpinnerContainer.appendChild(loadingSpinner);
+  return loadingSpinnerContainer;
+}
+
 searchButton.addEventListener("click", async () => {
   videoListContainer.classList.add("hidden");
   searchResultContainer.classList.remove("hidden");
-  // searchResultContainer.classList.add("visible");
+
+  searchResultList.innerHTML = "";
+
+  const loadingSpinnerContainer = showLoadingSpinner();
+
+  searchResultContainer.appendChild(loadingSpinnerContainer);
+
   const { searchResults } = await searchByImage();
+
+  searchResultContainer.removeChild(loadingSpinnerContainer);
+
   if (searchResults) {
     showSearchResults(searchResults);
+  } else {
+    const noResultsMessage = document.createElement("p");
+    noResultsMessage.textContent = "No search results found.";
+    searchResultContainer.appendChild(noResultsMessage);
   }
 });
 
 async function showSearchResults(searchResults) {
-  console.log("🚀 > showSearchResults > searchResults=", searchResults);
   searchResultPagination.innerHTML = "";
 
   // Fetch video details for each search result and store them
@@ -140,17 +167,20 @@ async function showSearchResults(searchResults) {
     })
   );
 
-  console.log("🚀 > searchResults.forEach > searchResults=", searchResults);
-
   searchResults.forEach((result) => {
     const videoContainer = document.createElement("div");
     videoContainer.classList.add(
+      "flex",
       "flex-col",
       "justify-center",
       "items-center",
       "p-3",
-      "border"
+      "border",
+      "gap-3"
     );
+
+    const videoTitle = document.createElement("div");
+    videoTitle.innerHTML = `<p class="text-center mb-2 text-xs">${result.videoDetail.metadata.filename}</p>`;
 
     // Create a container for the thumbnail
     const thumbnailContainer = document.createElement("div");
@@ -165,9 +195,6 @@ async function showSearchResults(searchResults) {
 
     // Append the thumbnail image to its container
     thumbnailContainer.appendChild(thumbnailImage);
-
-    // Append the thumbnail container to the main video container
-    videoContainer.appendChild(thumbnailContainer);
 
     // Create a container for the iframe element (video player)
     const iframeContainer = document.createElement("div");
@@ -189,7 +216,61 @@ async function showSearchResults(searchResults) {
       "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     iframeElement.allowFullscreen = true;
     iframeContainer.appendChild(iframeElement);
+
+    const resultDetails = document.createElement("div");
+    resultDetails.classList.add("text-center", "text-xs"); // Center align the text
+
+    const confidenceSpan = document.createElement("span");
+    confidenceSpan.innerText = result.confidence;
+
+    switch (result.confidence) {
+      case "high":
+        confidenceSpan.classList.add(
+          "bg-green-500",
+          "text-white",
+          "p-1",
+          "rounded",
+          "text-xs"
+        );
+        break;
+      case "medium":
+        confidenceSpan.classList.add(
+          "bg-yellow-500",
+          "text-white",
+          "p-1",
+          "rounded",
+          "text-xs"
+        );
+        break;
+      case "low":
+        confidenceSpan.classList.add(
+          "bg-red-500",
+          "text-white",
+          "p-1",
+          "rounded",
+          "text-xs"
+        );
+        break;
+      default:
+        confidenceSpan.classList.add(
+          "bg-gray-500",
+          "text-white",
+          "p-1",
+          "rounded",
+          "text-xs"
+        );
+        break;
+    }
+
+    const detailsText = document.createElement("p");
+    detailsText.innerText = `start: ${startSeconds}, end: ${endSeconds} | `;
+    detailsText.appendChild(confidenceSpan);
+    resultDetails.appendChild(detailsText);
+
+    videoContainer.appendChild(videoTitle);
+    videoContainer.appendChild(thumbnailContainer);
     videoContainer.appendChild(iframeContainer);
+    videoContainer.appendChild(resultDetails);
 
     // Add event listener to toggle visibility of thumbnail and iframe on click
     thumbnailImage.addEventListener("click", () => {
@@ -199,10 +280,6 @@ async function showSearchResults(searchResults) {
     });
 
     searchResultList.appendChild(videoContainer);
-
-    const videoTitle = document.createElement("div");
-    videoTitle.innerHTML = `<p class="text-center mb-2 text-xs">${result.videoDetail.metadata.filename}</p>`;
-    videoContainer.appendChild(videoTitle);
   });
 
   /** Add pagination buttons */
@@ -212,7 +289,12 @@ async function showSearchResults(searchResults) {
     pageButton.textContent = "Show More";
     pageButton.classList.add("bg-lime-100", "px-3", "py-1", "rounded");
     pageButton.addEventListener("click", async () => {
+      const loadingSpinnerContainer = showLoadingSpinner();
+      searchResultContainer.appendChild(loadingSpinnerContainer);
+
       const nextPageResults = await getNextSearchResults(nextPageToken);
+
+      searchResultContainer.removeChild(loadingSpinnerContainer);
 
       showSearchResults(nextPageResults.searchResults);
       nextPageToken = nextPageResults.pageInfo.nextPageToken || null;
