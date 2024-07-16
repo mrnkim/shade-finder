@@ -127,6 +127,13 @@ function showLoadingSpinner() {
 }
 
 searchButton.addEventListener("click", async () => {
+  searchButton.disabled = true;
+  prevButton.disabled = true;
+  nextButton.disabled = true;
+
+  nextPageToken = null;
+  searchResultPagination.innerHTML = "";
+
   videoListContainer.classList.add("hidden");
   searchResultContainer.classList.remove("hidden");
 
@@ -136,16 +143,26 @@ searchButton.addEventListener("click", async () => {
 
   searchResultContainer.appendChild(loadingSpinnerContainer);
 
-  const { searchResults } = await searchByImage();
+  try {
+    const { searchResults } = await searchByImage();
 
-  searchResultContainer.removeChild(loadingSpinnerContainer);
+    searchResultContainer.removeChild(loadingSpinnerContainer);
 
-  if (searchResults) {
-    showSearchResults(searchResults);
-  } else {
-    const noResultsMessage = document.createElement("p");
-    noResultsMessage.textContent = "No search results found.";
-    searchResultContainer.appendChild(noResultsMessage);
+    if (searchResults) {
+      showSearchResults(searchResults);
+    } else {
+      const noResultsMessage = document.createElement("p");
+      noResultsMessage.textContent = "No search results found.";
+      searchResultContainer.appendChild(noResultsMessage);
+    }
+  } catch (error) {
+    console.error("Error fetching search results:", error);
+    // Handle error (e.g., show an error message to the user)
+  } finally {
+    // Re-enable the search button
+    searchButton.disabled = false;
+    prevButton.disabled = false;
+    nextButton.disabled = false;
   }
 });
 
@@ -370,7 +387,7 @@ async function showVideos(page = 1) {
     for (let i = 1; i <= pageInfo.totalPage; i++) {
       const pageButton = document.createElement("button");
       pageButton.textContent = i;
-      pageButton.classList.add("bg-lime-100", "px-3", "py-1", "rounded");
+      pageButton.classList.add("bg-lime-100", "px-3", "py-1");
       if (i === page) {
         pageButton.classList.remove("bg-lime-100");
         pageButton.classList.add("bg-lime-400");

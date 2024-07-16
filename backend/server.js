@@ -54,7 +54,7 @@ app.get("/videos", async (request, response, next) => {
   }
 });
 
-//TODO: change to SDK
+//TODO: change to SDK (if the response includes source object)
 /** Get a video of an index */
 app.get("/videos/:videoId", async (request, response, next) => {
   const videoId = request.params.videoId;
@@ -99,6 +99,7 @@ app.get("/search", async (request, response, next) => {
       options: ["visual"],
       threshold: "high",
       pageLimit: "12",
+      adjustConfidenceLevel: "1",
     });
 
     // Inspect the structure of imageResult
