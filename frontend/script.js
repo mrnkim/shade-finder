@@ -93,7 +93,6 @@ async function getVideoOfVideos(page = 1) {
 
 async function searchByImage() {
   const imageSrc = carouselImg.src.split("/").pop();
-  console.log(`Searching for image: ${imageSrc}`); // Log the image source
 
   try {
     const response = await fetch(
@@ -103,6 +102,7 @@ async function searchByImage() {
       throw new Error("Network response was not ok" + response.statusText);
     }
     const data = await response.json();
+    console.log("🚀 > searchByImage > data=", data);
     nextPageToken = data.pageInfo.nextPageToken;
     return data;
   } catch (error) {
@@ -308,8 +308,8 @@ async function showSearchResults(searchResults) {
 
   if (nextPageToken) {
     const pageButton = document.createElement("button");
-    pageButton.textContent = "Show More";
-    pageButton.classList.add("bg-lime-100", "px-3", "py-1", "rounded");
+    pageButton.innerHTML = '<i class="fa-solid fa-chevron-up"></i> Show More';
+    // pageButton.classList.add("bg-lime-100", "px-3", "py-1", "rounded");
     pageButton.addEventListener("click", async () => {
       const loadingSpinnerContainer = showLoadingSpinner();
       searchResultContainer.appendChild(loadingSpinnerContainer);
@@ -376,7 +376,7 @@ async function showVideos(page = 1) {
       videoContainer.appendChild(iframeElement);
 
       const videoTitle = document.createElement("div");
-      videoTitle.innerHTML = `<p class="text-center mb-2 text-xs">${video.metadata.filename}</p>`;
+      videoTitle.innerHTML = `<p class="mb-2 text-xs">${video.metadata.filename}</p>`;
       videoContainer.appendChild(videoTitle);
 
       videoList.appendChild(videoContainer);
@@ -387,11 +387,21 @@ async function showVideos(page = 1) {
     for (let i = 1; i <= pageInfo.totalPage; i++) {
       const pageButton = document.createElement("button");
       pageButton.textContent = i;
-      pageButton.classList.add("bg-lime-100", "px-3", "py-1");
+      pageButton.classList.add(
+        "bg-lime-100",
+        "px-3",
+        "py-1",
+        "rounded-full",
+        "hover:border",
+        "hover:border-slate-200",
+        "transition",
+        "duration-200"
+      );
       if (i === page) {
-        pageButton.classList.remove("bg-lime-100");
-        pageButton.classList.add("bg-lime-400");
+        pageButton.classList.add("bg-slate-200", "font-medium");
         pageButton.disabled = true;
+      } else {
+        pageButton.classList.add("bg-transparent");
       }
       pageButton.addEventListener("click", () => showVideos(i));
       videoListPagination.appendChild(pageButton);
