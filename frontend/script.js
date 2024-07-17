@@ -3,6 +3,8 @@ const images = [
   { src: "./images/orange.png", label: "Orange Shades" },
   { src: "./images/blue.png", label: "Blue Shades" },
   { src: "./images/green.png", label: "Green Shades" },
+  { src: "./images/pink.png", label: "Pink Shades" },
+  { src: "./images/brown.png", label: "Brown Shades" },
 ];
 
 let currImgIndex = 0;
@@ -248,29 +250,32 @@ async function showSearchResults(searchResults) {
     switch (result.confidence) {
       case "high":
         confidenceSpan.classList.add(
-          "bg-green-500",
+          "bg-teal-400",
           "text-white",
           "p-1",
           "rounded",
-          "text-xs"
+          "text-xs",
+          "capitalize"
         );
         break;
       case "medium":
         confidenceSpan.classList.add(
-          "bg-yellow-500",
+          "bg-yellow-400",
           "text-white",
           "p-1",
           "rounded",
-          "text-xs"
+          "text-xs",
+          "capitalize"
         );
         break;
       case "low":
         confidenceSpan.classList.add(
-          "bg-red-500",
+          "bg-zinc-400",
           "text-white",
           "p-1",
           "rounded",
-          "text-xs"
+          "text-xs",
+          "capitalize"
         );
         break;
       default:
