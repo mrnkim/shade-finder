@@ -121,7 +121,7 @@ function showLoadingSpinner() {
     "items-center"
   );
   const loadingSpinner = document.createElement("img");
-  loadingSpinner.src = "./LoadingSpinner.svg";
+  loadingSpinner.src = "./images/LoadingSpinner.svg";
   loadingSpinner.alt = "loading spinner";
   loadingSpinner.classList.add("animate-spin", "h-8", "w-8"); // Adjust size as needed
   loadingSpinnerContainer.appendChild(loadingSpinner);
