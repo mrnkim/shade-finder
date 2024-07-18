@@ -4,7 +4,8 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
-const { TwelveLabs, SearchData } = require("twelvelabs-js");
+const asyncHandler = require("express-async-handler");
+const { TwelveLabs } = require("twelvelabs-js");
 
 dotenv.config();
 
@@ -12,28 +13,33 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "../frontend/public")));
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 const API_BASE_URL = "https://api.twelvelabs.io/v1.2";
 const API_KEY = process.env.TWELVE_LABS_API_KEY;
 const INDEX_ID = process.env.TWELVE_LABS_INDEX_ID;
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
 const client = new TwelveLabs({ apiKey: API_KEY });
 
-const HEADERS = {
-  "Content-Type": "application/json",
-  "x-api-key": API_KEY,
-};
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+/** Global error handler */
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  const message = err.message || "Internal Server Error";
+  res.status(status).json({ error: message });
+});
 
 /** Get videos */
-app.get("/videos", async (request, response, next) => {
-  try {
+app.get(
+  "/videos",
+  asyncHandler(async (req, res, next) => {
+    const { page_limit, page } = req.query;
+
     const pagination = await client.index.video.listPagination(INDEX_ID, {
-      pageLimit: request.query.page_limit,
-      page: request.query.page,
+      pageLimit: page_limit,
+      page: page,
     });
 
     const videos = pagination.data.map((video) => ({
@@ -41,55 +47,49 @@ app.get("/videos", async (request, response, next) => {
       metadata: video.metadata,
     }));
 
-    const responseData = {
+    res.json({
       videos,
       page_info: pagination.pageInfo,
-    };
+    });
+  })
+);
 
-    response.json(responseData);
-  } catch (error) {
-    const status = error.response?.status || 500;
-    const message = error.response?.data?.message || "Error Getting Videos";
-    return next({ status, message });
-  }
-});
-
-//TODO: change to SDK (if the response includes source object)
+//TODO: Change to SDK (once the response includes source object)
 /** Get a video of an index */
-app.get("/videos/:videoId", async (request, response, next) => {
-  const videoId = request.params.videoId;
+app.get(
+  "/videos/:videoId",
+  asyncHandler(async (req, res, next) => {
+    const { videoId } = req.params;
 
-  try {
     const options = {
       method: "GET",
       url: `${API_BASE_URL}/indexes/${INDEX_ID}/videos/${videoId}`,
-      headers: { ...HEADERS },
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": API_KEY,
+      },
     };
 
     const apiResponse = await axios.request(options);
 
-    response.json(apiResponse.data);
-  } catch (error) {
-    const status = error.response?.status || 500;
-    const message = error.response?.data?.message || "Error Getting a Video";
-    return next({ status, message });
-  }
-});
+    res.json(apiResponse.data);
+  })
+);
 
-/** Image search */
-app.get("/search", async (request, response, next) => {
-  try {
-    const imageSrc = request.query.imageSrc;
+/** Search videos based on an image query */
+app.get(
+  "/search",
+  asyncHandler(async (req, res, next) => {
+    const { imageSrc } = req.query;
     const imagePath = path.join(
       __dirname,
       "../frontend/public/images",
       imageSrc
     );
 
-    // Check if the image file exists
     if (!fs.existsSync(imagePath)) {
       console.error("Image not found at path:", imagePath);
-      return response.status(404).json({ error: "Image not found" });
+      return res.status(404).json({ error: "Image not found" });
     }
 
     const imageResult = await client.search.query({
@@ -102,40 +102,24 @@ app.get("/search", async (request, response, next) => {
       adjustConfidenceLevel: "1",
     });
 
-    // Inspect the structure of imageResult
-    const searchResults = imageResult.data;
-
-    const responseData = {
-      searchResults,
+    res.json({
+      searchResults: imageResult.data,
       pageInfo: imageResult.pageInfo,
-    };
-    response.json(responseData);
-  } catch (error) {
-    console.error("Error searching for image:", error);
-    response.status(500).send("Internal Server Error");
-  }
-});
-
-/** 1. [Backend] Build get search (page token) function in server
- *  2. [Frontend] Button clicked -> retreive and concate new search results
- */
+    });
+  })
+);
 
 /** Get search results of a specific page */
-app.get("/search/:pageToken", async (request, response, next) => {
-  try {
-    let searchResults = await client.search.byPageToken(
-      `${request.params.pageToken}`
-    );
+app.get(
+  "/search/:pageToken",
+  asyncHandler(async (req, res, next) => {
+    const { pageToken } = req.params;
 
-    const responseData = {
+    let searchResults = await client.search.byPageToken(`${pageToken}`);
+
+    res.json({
       searchResults: searchResults.data,
       pageInfo: searchResults.pageInfo,
-    };
-
-    response.json(responseData);
-  } catch (error) {
-    const status = error.response?.status || 500;
-    const message = error.response?.data?.message || "Error Getting Videos";
-    return next({ status, message });
-  }
-});
+    });
+  })
+);
