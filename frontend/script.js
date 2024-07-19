@@ -371,10 +371,7 @@ async function showVideos(page = 1) {
         "p-3",
         "gap-1",
         "my-4"
-        // "flex-col",
-        // "justify-center",
-        // "items-center",
-        // "p-3"
+
       );
 
       const iframeElement = document.createElement("iframe");
