@@ -1,3 +1,14 @@
+"use strict";
+
+let currImgIndex = 0;
+let nextPageToken;
+const videoCache = new Map();
+
+/** For server calls */
+const SERVER = "http://localhost:5001/";
+const PAGE_LIMIT = 12;
+
+/** Images Data */
 const images = [
   { src: "./images/berry.jpg", label: "Berry Shades" },
   { src: "./images/orange.png", label: "Orange Shades" },
@@ -7,10 +18,7 @@ const images = [
   { src: "./images/brown.png", label: "Brown Shades" },
 ];
 
-let currImgIndex = 0;
-let nextPageToken;
-const videoCache = new Map();
-
+/** DOM Elements */
 const carouselImg = document.getElementById("carousel-image");
 const colorLabel = document.getElementById("color-label");
 const prevButton = document.getElementById("prev");
@@ -27,11 +35,7 @@ const searchResultContainer = document.getElementById(
 );
 const searchResultList = document.getElementById("search-result-list");
 
-function updateCarousel() {
-  carouselImg.src = images[currImgIndex].src;
-  colorLabel.textContent = images[currImgIndex].label;
-}
-
+/** Event Listeners */
 prevButton.addEventListener("click", () => {
   currImgIndex = currImgIndex === 0 ? images.length - 1 : currImgIndex - 1;
   updateCarousel();
@@ -41,92 +45,6 @@ nextButton.addEventListener("click", () => {
   currImgIndex = currImgIndex === images.length - 1 ? 0 : currImgIndex + 1;
   updateCarousel();
 });
-
-const SERVER = "http://localhost:5001/";
-const PAGE_LIMIT = 12;
-
-async function getVideos(page = 1) {
-  try {
-    const response = await fetch(
-      `${SERVER}videos?page_limit=${PAGE_LIMIT}&page=${page}`
-    );
-    if (!response.ok) {
-      throw new Error("Network response was not ok" + response.statusText);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error fetching videos:", error);
-    return error;
-  }
-}
-
-async function getVideo(videoId) {
-  if (videoCache.has(videoId)) {
-    return videoCache.get(videoId);
-  }
-
-  try {
-    const response = await fetch(`${SERVER}videos/${videoId}`);
-    if (!response.ok) {
-      throw new Error("Network response was not ok" + response.statusText);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error fetching videos:", error);
-    return error;
-  }
-}
-
-async function getVideoOfVideos(page = 1) {
-  const videosResponse = await getVideos(page);
-
-  if (videosResponse.videos.length > 0) {
-    const videosDetail = await Promise.all(
-      videosResponse.videos.map((video) => {
-        return getVideo(video.id);
-      })
-    );
-
-    return { videosDetail, pageInfo: videosResponse.page_info };
-  }
-}
-
-async function searchByImage() {
-  const imageSrc = carouselImg.src.split("/").pop();
-
-  try {
-    const response = await fetch(
-      `${SERVER}search?imageSrc=${encodeURIComponent(imageSrc)}`
-    );
-    if (!response.ok) {
-      throw new Error("Network response was not ok" + response.statusText);
-    }
-    const data = await response.json();
-    console.log("🚀 > searchByImage > data=", data);
-    nextPageToken = data.pageInfo.nextPageToken;
-    return data;
-  } catch (error) {
-    console.error("Error searching videos:", error);
-    return error;
-  }
-}
-
-function showLoadingSpinner() {
-  const loadingSpinnerContainer = document.createElement("div");
-  loadingSpinnerContainer.classList.add(
-    "flex",
-    "justify-center",
-    "items-center"
-  );
-  const loadingSpinner = document.createElement("img");
-  loadingSpinner.src = "./images/LoadingSpinner.svg";
-  loadingSpinner.alt = "loading spinner";
-  loadingSpinner.classList.add("animate-spin", "h-8", "w-8"); // Adjust size as needed
-  loadingSpinnerContainer.appendChild(loadingSpinner);
-  return loadingSpinnerContainer;
-}
 
 searchButton.addEventListener("click", async () => {
   searchButton.disabled = true;
@@ -159,14 +77,32 @@ searchButton.addEventListener("click", async () => {
     }
   } catch (error) {
     console.error("Error fetching search results:", error);
-    // Handle error (e.g., show an error message to the user)
   } finally {
-    // Re-enable the search button
     searchButton.disabled = false;
     prevButton.disabled = false;
     nextButton.disabled = false;
   }
 });
+
+function updateCarousel() {
+  carouselImg.src = images[currImgIndex].src;
+  colorLabel.textContent = images[currImgIndex].label;
+}
+
+function showLoadingSpinner() {
+  const loadingSpinnerContainer = document.createElement("div");
+  loadingSpinnerContainer.classList.add(
+    "flex",
+    "justify-center",
+    "items-center"
+  );
+  const loadingSpinner = document.createElement("img");
+  loadingSpinner.src = "./images/LoadingSpinner.svg";
+  loadingSpinner.alt = "loading spinner";
+  loadingSpinner.classList.add("animate-spin", "h-8", "w-8"); // Adjust size as needed
+  loadingSpinnerContainer.appendChild(loadingSpinner);
+  return loadingSpinnerContainer;
+}
 
 async function showSearchResults(searchResults) {
   searchResultPagination.innerHTML = "";
@@ -352,20 +288,6 @@ async function showSearchResults(searchResults) {
   }
 }
 
-async function getNextSearchResults(nextPageToken) {
-  try {
-    const response = await fetch(`${SERVER}search/${nextPageToken}`);
-    if (!response.ok) {
-      throw new Error("Network response was not ok" + response.statusText);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error searching videos:", error);
-    return error;
-  }
-}
-
 async function showVideos(page = 1) {
   const { videosDetail, pageInfo } = await getVideoOfVideos(page);
 
@@ -425,6 +347,89 @@ async function showVideos(page = 1) {
       pageButton.addEventListener("click", () => showVideos(i));
       videoListPagination.appendChild(pageButton);
     }
+  }
+}
+
+/** Server requests */
+async function getVideos(page = 1) {
+  try {
+    const response = await fetch(
+      `${SERVER}videos?page_limit=${PAGE_LIMIT}&page=${page}`
+    );
+    if (!response.ok) {
+      throw new Error("Network response was not ok" + response.statusText);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching videos:", error);
+    return error;
+  }
+}
+
+async function getVideo(videoId) {
+  if (videoCache.has(videoId)) {
+    return videoCache.get(videoId);
+  }
+
+  try {
+    const response = await fetch(`${SERVER}videos/${videoId}`);
+    if (!response.ok) {
+      throw new Error("Network response was not ok" + response.statusText);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching videos:", error);
+    return error;
+  }
+}
+
+async function getVideoOfVideos(page = 1) {
+  const videosResponse = await getVideos(page);
+
+  if (videosResponse.videos.length > 0) {
+    const videosDetail = await Promise.all(
+      videosResponse.videos.map((video) => {
+        return getVideo(video.id);
+      })
+    );
+
+    return { videosDetail, pageInfo: videosResponse.page_info };
+  }
+}
+
+async function searchByImage() {
+  const imageSrc = carouselImg.src.split("/").pop();
+
+  try {
+    const response = await fetch(
+      `${SERVER}search?imageSrc=${encodeURIComponent(imageSrc)}`
+    );
+    if (!response.ok) {
+      throw new Error("Network response was not ok" + response.statusText);
+    }
+    const data = await response.json();
+    console.log("🚀 > searchByImage > data=", data);
+    nextPageToken = data.pageInfo.nextPageToken;
+    return data;
+  } catch (error) {
+    console.error("Error searching videos:", error);
+    return error;
+  }
+}
+
+async function getNextSearchResults(nextPageToken) {
+  try {
+    const response = await fetch(`${SERVER}search/${nextPageToken}`);
+    if (!response.ok) {
+      throw new Error("Network response was not ok" + response.statusText);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error searching videos:", error);
+    return error;
   }
 }
 
