@@ -350,41 +350,6 @@ async function showVideos(page = 1) {
   }
 }
 
-/** Server requests */
-async function getVideos(page = 1) {
-  try {
-    const response = await fetch(
-      `${SERVER}videos?page_limit=${PAGE_LIMIT}&page=${page}`
-    );
-    if (!response.ok) {
-      throw new Error("Network response was not ok" + response.statusText);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error fetching videos:", error);
-    return error;
-  }
-}
-
-async function getVideo(videoId) {
-  if (videoCache.has(videoId)) {
-    return videoCache.get(videoId);
-  }
-
-  try {
-    const response = await fetch(`${SERVER}videos/${videoId}`);
-    if (!response.ok) {
-      throw new Error("Network response was not ok" + response.statusText);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error fetching videos:", error);
-    return error;
-  }
-}
-
 async function getVideoOfVideos(page = 1) {
   const videosResponse = await getVideos(page);
 
@@ -399,40 +364,54 @@ async function getVideoOfVideos(page = 1) {
   }
 }
 
+/********************** Server requests ***********************/
+async function fetchFromServer(url) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error("Network response was not ok" + response.statusText);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return error;
+  }
+}
+
+async function getVideos(page = 1) {
+  return fetchFromServer(
+    `${SERVER}videos?page_limit=${PAGE_LIMIT}&page=${page}`
+  );
+}
+
+async function getVideo(videoId) {
+  if (videoCache.has(videoId)) {
+    return videoCache.get(videoId);
+  }
+  return fetchFromServer(`${SERVER}videos/${videoId}`);
+}
+
 async function searchByImage() {
   const imageSrc = carouselImg.src.split("/").pop();
 
   try {
-    const response = await fetch(
+    const data = await fetchFromServer(
       `${SERVER}search?imageSrc=${encodeURIComponent(imageSrc)}`
     );
-    if (!response.ok) {
-      throw new Error("Network response was not ok" + response.statusText);
+    if (data) {
+      nextPageToken = data.pageInfo.nextPageToken; // Update the nextPageToken
+      return data;
     }
-    const data = await response.json();
-    console.log("🚀 > searchByImage > data=", data);
-    nextPageToken = data.pageInfo.nextPageToken;
-    return data;
   } catch (error) {
     console.error("Error searching videos:", error);
-    return error;
   }
+  return { searchResults: [], pageInfo: {} };
 }
 
 async function getNextSearchResults(nextPageToken) {
-  try {
-    const response = await fetch(`${SERVER}search/${nextPageToken}`);
-    if (!response.ok) {
-      throw new Error("Network response was not ok" + response.statusText);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error searching videos:", error);
-    return error;
-  }
+  return fetchFromServer(`${SERVER}search/${nextPageToken}`);
 }
 
-/** Initial update */
+/********************** Initial update ***********************/
 updateCarousel();
 showVideos();
