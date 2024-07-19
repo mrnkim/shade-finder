@@ -328,8 +328,8 @@ async function showSearchResults(searchResults) {
       if (!nextPageToken) {
         searchResultPagination.innerHTML = "";
         const backToTopButton = document.createElement("button");
-        backToTopButton.textContent = "Back to Top";
-        backToTopButton.classList.add("bg-lime-100", "px-3", "py-1", "rounded");
+        backToTopButton.innerHTML =
+          '<i class="fa-solid fa-angles-up"></i> Back to Top';
         backToTopButton.addEventListener("click", async () => {
           searchButton.scrollIntoView({ behavior: "smooth", block: "start" });
         });
@@ -364,10 +364,17 @@ async function showVideos(page = 1) {
     videosDetail.forEach((video) => {
       const videoContainer = document.createElement("div");
       videoContainer.classList.add(
+        "flex",
         "flex-col",
         "justify-center",
         "items-center",
-        "p-3"
+        "p-3",
+        "gap-1",
+        "my-4"
+        // "flex-col",
+        // "justify-center",
+        // "items-center",
+        // "p-3"
       );
 
       const iframeElement = document.createElement("iframe");
