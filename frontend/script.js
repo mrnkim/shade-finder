@@ -327,6 +327,7 @@ async function showSearchResults(searchResults) {
       nextPageToken = nextPageResults.pageInfo.nextPageToken || null;
       if (!nextPageToken) {
         searchResultPagination.innerHTML = "";
+        searchResultPagination.classList.add("gap-10");
         const backToTopButton = document.createElement("button");
         backToTopButton.innerHTML =
           '<i class="fa-solid fa-angles-up"></i> Back to Top';
@@ -334,6 +335,16 @@ async function showSearchResults(searchResults) {
           searchButton.scrollIntoView({ behavior: "smooth", block: "start" });
         });
         searchResultPagination.appendChild(backToTopButton);
+
+        const backToStartButton = document.createElement("button");
+        backToStartButton.innerHTML =
+          '<i class="fa-solid fa-rotate-left"></i> Back to Start';
+        backToStartButton.addEventListener("click", async () => {
+          searchResultContainer.classList.add("hidden");
+          videoListContainer.classList.remove("hidden");
+          showVideos();
+        });
+        searchResultPagination.appendChild(backToStartButton);
       }
     });
 
@@ -371,7 +382,6 @@ async function showVideos(page = 1) {
         "p-3",
         "gap-1",
         "my-4"
-
       );
 
       const iframeElement = document.createElement("iframe");
