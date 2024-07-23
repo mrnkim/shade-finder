@@ -97,9 +97,9 @@ app.get(
       queryMediaFile: fs.createReadStream(imagePath),
       queryMediaType: "image",
       options: ["visual"],
-      threshold: "high",
+      threshold: "medium",
       pageLimit: "12",
-      adjustConfidenceLevel: "1",
+      adjustConfidenceLevel: "0.6",
     });
 
     res.json({
