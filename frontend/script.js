@@ -341,7 +341,6 @@ async function searchByImage() {
   const data = await fetchFromServer(
     `${SERVER}search?imageSrc=${encodeURIComponent(imageSrc)}`
   );
-  console.log("🚀 > searchByImage > data=", data.pageInfo.totalResults);
   if (data) {
     nextPageToken = data.pageInfo.nextPageToken;
     return data;
