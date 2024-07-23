@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, "../frontend/public")));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 const API_BASE_URL = "https://api.twelvelabs.io/v1.2";
 const API_KEY = process.env.TWELVE_LABS_API_KEY;
 const INDEX_ID = process.env.TWELVE_LABS_INDEX_ID;
