@@ -1,5 +1,5 @@
 modules = ["nodejs-20", "web"]
-run = "node backend/server.js"
+run = "cd backend && npm install express && node server.js"
 
 [nix]
 channel = "stable-24_05"
