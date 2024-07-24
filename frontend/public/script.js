@@ -27,12 +27,12 @@ const nextButton = document.getElementById("next");
 const videoList = document.getElementById("video-list");
 const videoListPagination = document.getElementById("video-list-pagination");
 const searchResultPagination = document.getElementById(
-  "search-result-pagination",
+  "search-result-pagination"
 );
 const searchButton = document.getElementById("search");
 const videoListContainer = document.getElementById("video-list-container");
 const searchResultContainer = document.getElementById(
-  "search-result-container",
+  "search-result-container"
 );
 const searchResultList = document.getElementById("search-result-list");
 
@@ -60,6 +60,7 @@ async function handleSearchButtonClick() {
   toggleSearchButton(false);
 
   nextPageToken = null;
+  searchResultContainer.innerHTML = "";
   searchResultPagination.innerHTML = "";
   videoListContainer.classList.add("hidden");
   searchResultContainer.classList.remove("hidden");
@@ -70,10 +71,11 @@ async function handleSearchButtonClick() {
 
   try {
     const { searchResults } = await searchByImage();
+    console.log("🚀 > handleSearchButtonClick > searchResults=", searchResults);
 
     searchResultContainer.removeChild(loadingSpinnerContainer);
 
-    if (searchResults) {
+    if (searchResults.length > 0) {
       showSearchResults(searchResults);
     } else {
       displayNoResultsMessage();
@@ -96,7 +98,7 @@ function showLoadingSpinner() {
   loadingSpinnerContainer.classList.add(
     "flex",
     "justify-center",
-    "items-center",
+    "items-center"
   );
 
   const loadingSpinner = document.createElement("img");
@@ -109,9 +111,27 @@ function showLoadingSpinner() {
 }
 
 function displayNoResultsMessage() {
+  const noResultsContainer = document.createElement("div");
+  noResultsContainer.classList.add("text-center", "my-4", "p-4");
+
   const noResultsMessage = document.createElement("p");
-  noResultsMessage.textContent = "No search results found.";
-  searchResultContainer.appendChild(noResultsMessage);
+  noResultsMessage.textContent = "No search results found :(";
+  noResultsMessage.classList.add("text-center", "my-4");
+
+  const backToStartButton = createBackToStartButton();
+  backToStartButton.classList.add(
+    "flex",
+    "justify-center",
+    "items-center",
+    "my-4",
+    "mx-auto",
+    "p-4"
+  );
+
+  noResultsContainer.appendChild(noResultsMessage);
+  noResultsContainer.appendChild(backToStartButton);
+
+  searchResultContainer.appendChild(noResultsContainer);
 }
 
 async function showSearchResults(searchResults) {
@@ -125,16 +145,19 @@ async function showSearchResults(searchResults) {
       } catch (error) {
         console.error(
           `Error fetching video details for ${result.videoId}:`,
-          error,
+          error
         );
       }
-    }),
+    })
   );
 
   searchResults.forEach(displaySearchResult);
 
   if (nextPageToken) {
+    console.log("🚀 > showSearchResults > nextPageToken=", nextPageToken);
     addPaginationButton();
+  } else {
+    appendFinalButtons(); // Append final buttons when no more pages
   }
 }
 
@@ -147,7 +170,7 @@ function displaySearchResult(result) {
     "items-center",
     "p-3",
     "gap-1",
-    "my-4",
+    "my-4"
   );
 
   const videoTitle = createVideoTitle(result);
@@ -159,9 +182,10 @@ function displaySearchResult(result) {
     videoTitle,
     thumbnailContainer,
     iframeContainer,
-    resultDetails,
+    resultDetails
   );
   searchResultList.appendChild(videoContainer);
+  searchResultContainer.appendChild(searchResultList);
 
   thumbnailContainer.querySelector("img").addEventListener("click", () => {
     toggleThumbnailAndIframe(thumbnailContainer, iframeContainer, result);
@@ -174,7 +198,7 @@ function createVideoTitle(result) {
     "w-full",
     "overflow-hidden",
     "whitespace-nowrap",
-    "text-ellipsis",
+    "text-ellipsis"
   );
   videoTitle.innerHTML = `<p class="text-center mb-2 text-xs truncate">${result.videoDetail.metadata.filename}</p>`;
   return videoTitle;
@@ -200,7 +224,7 @@ function createIframeContainer(result) {
   iframeElement.height = 140;
   iframeElement.src = `${result.videoDetail.source.url.replace(
     "watch?v=",
-    "embed/",
+    "embed/"
   )}?start=${Math.round(result.start)}&end=${Math.round(result.end)}`;
   iframeElement.allow =
     "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
@@ -219,7 +243,7 @@ function createResultDetails(result) {
 
   const detailsText = document.createElement("p");
   detailsText.innerText = `start: ${Math.round(
-    result.start,
+    result.start
   )}, end: ${Math.round(result.end)} | `;
   detailsText.appendChild(confidenceSpan);
   resultDetails.appendChild(detailsText);
@@ -246,16 +270,22 @@ function addPaginationButton() {
 
     showSearchResults(nextPageResults.searchResults);
     nextPageToken = nextPageResults.pageInfo.nextPageToken || null;
-
-    if (!nextPageToken) {
-      searchResultPagination.innerHTML = "";
-      searchResultPagination.classList.add("gap-10");
-
-      const { backToTopButton, backToStartButton } = createSearchEndButtons();
-      searchResultPagination.append(backToTopButton, backToStartButton);
-    }
   });
   searchResultPagination.appendChild(pageButton);
+  searchResultContainer.appendChild(searchResultPagination);
+}
+
+function appendFinalButtons() {
+  const buttonsContainer = document.createElement("div");
+  buttonsContainer.classList.add("flex", "justify-center", "gap-12", "my-4");
+
+  const backToTopButton = createBackToTopButton();
+  const backToStartButton = createBackToStartButton();
+
+  buttonsContainer.appendChild(backToTopButton);
+  buttonsContainer.appendChild(backToStartButton);
+
+  searchResultContainer.appendChild(buttonsContainer);
 }
 
 function addConfidenceClass(confidence) {
@@ -289,14 +319,17 @@ function addConfidenceClass(confidence) {
   return confidenceClasses[confidence] || confidenceClasses.default;
 }
 
-function createSearchEndButtons() {
+function createBackToTopButton() {
   const backToTopButton = document.createElement("button");
   backToTopButton.innerHTML =
     '<i class="fa-solid fa-angles-up"></i> Back to Top';
   backToTopButton.addEventListener("click", () => {
     searchButton.scrollIntoView({ behavior: "smooth", block: "start" });
   });
+  return backToTopButton;
+}
 
+function createBackToStartButton() {
   const backToStartButton = document.createElement("button");
   backToStartButton.innerHTML =
     '<i class="fa-solid fa-rotate-left"></i> Back to Start';
@@ -305,8 +338,7 @@ function createSearchEndButtons() {
     videoListContainer.classList.remove("hidden");
     showVideos();
   });
-
-  return { backToTopButton, backToStartButton };
+  return backToStartButton;
 }
 
 /********************** Server requests ***********************/
@@ -325,7 +357,7 @@ async function fetchFromServer(url) {
 
 async function getVideos(page = 1) {
   return fetchFromServer(
-    `${SERVER}videos?page_limit=${PAGE_LIMIT}&page=${page}`,
+    `${SERVER}videos?page_limit=${PAGE_LIMIT}&page=${page}`
   );
 }
 
@@ -341,9 +373,10 @@ async function getVideo(videoId) {
 async function searchByImage() {
   const imageSrc = carouselImg.src.split("/").pop();
   const data = await fetchFromServer(
-    `${SERVER}search?imageSrc=${encodeURIComponent(imageSrc)}`,
+    `${SERVER}search?imageSrc=${encodeURIComponent(imageSrc)}`
   );
   if (data) {
+    console.log("🚀 > searchByImage > data=", data);
     nextPageToken = data.pageInfo.nextPageToken;
     return data;
   }
@@ -384,7 +417,7 @@ function createVideoContainer(video) {
     "items-center",
     "p-3",
     "gap-1",
-    "my-4",
+    "my-4"
   );
 
   const iframeElement = document.createElement("iframe");
@@ -422,7 +455,7 @@ function createPageButton(pageNumber, currentPage) {
     "hover:border",
     "hover:border-slate-200",
     "transition",
-    "duration-200",
+    "duration-200"
   );
 
   if (pageNumber === currentPage) {
@@ -441,7 +474,7 @@ async function getVideoOfVideos(page = 1) {
 
   if (videosResponse.videos.length > 0) {
     const videosDetail = await Promise.all(
-      videosResponse.videos.map((video) => getVideo(video.id)),
+      videosResponse.videos.map((video) => getVideo(video.id))
     );
 
     return { videosDetail, pageInfo: videosResponse.page_info };
