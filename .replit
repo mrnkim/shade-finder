@@ -1,0 +1,12 @@
+modules = ["nodejs-20", "web"]
+run = "node backend/server.js"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+run = ["sh", "-c", "node backend/server.js"]
+
+[[ports]]
+localPort = 5001
+externalPort = 80
