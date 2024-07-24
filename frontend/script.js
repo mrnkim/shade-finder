@@ -5,6 +5,10 @@ let nextPageToken;
 const videoCache = new Map();
 
 const SERVER = "http://localhost:5001/";
+
+const SERVER_BASE_URL = window.location.hostname?.includes("replit")
+  ? new URL(`https://${window.location.hostname}:3000`)
+  : "http://localhost:5001/";
 const PAGE_LIMIT = 12;
 
 /********************** Images Data ***************************/
