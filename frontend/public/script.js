@@ -4,10 +4,8 @@ let currImgIndex = 0;
 let nextPageToken;
 const videoCache = new Map();
 
-const SERVER = "http://localhost:5001/";
-
-const SERVER_BASE_URL = window.location.hostname?.includes("replit")
-  ? new URL(`https://${window.location.hostname}:3000`)
+const SERVER = window.location.hostname?.includes("replit")
+  ? `https://${window.location.hostname}/`
   : "http://localhost:5001/";
 const PAGE_LIMIT = 12;
 
@@ -29,12 +27,12 @@ const nextButton = document.getElementById("next");
 const videoList = document.getElementById("video-list");
 const videoListPagination = document.getElementById("video-list-pagination");
 const searchResultPagination = document.getElementById(
-  "search-result-pagination"
+  "search-result-pagination",
 );
 const searchButton = document.getElementById("search");
 const videoListContainer = document.getElementById("video-list-container");
 const searchResultContainer = document.getElementById(
-  "search-result-container"
+  "search-result-container",
 );
 const searchResultList = document.getElementById("search-result-list");
 
@@ -98,7 +96,7 @@ function showLoadingSpinner() {
   loadingSpinnerContainer.classList.add(
     "flex",
     "justify-center",
-    "items-center"
+    "items-center",
   );
 
   const loadingSpinner = document.createElement("img");
@@ -127,10 +125,10 @@ async function showSearchResults(searchResults) {
       } catch (error) {
         console.error(
           `Error fetching video details for ${result.videoId}:`,
-          error
+          error,
         );
       }
-    })
+    }),
   );
 
   searchResults.forEach(displaySearchResult);
@@ -149,7 +147,7 @@ function displaySearchResult(result) {
     "items-center",
     "p-3",
     "gap-1",
-    "my-4"
+    "my-4",
   );
 
   const videoTitle = createVideoTitle(result);
@@ -161,7 +159,7 @@ function displaySearchResult(result) {
     videoTitle,
     thumbnailContainer,
     iframeContainer,
-    resultDetails
+    resultDetails,
   );
   searchResultList.appendChild(videoContainer);
 
@@ -176,7 +174,7 @@ function createVideoTitle(result) {
     "w-full",
     "overflow-hidden",
     "whitespace-nowrap",
-    "text-ellipsis"
+    "text-ellipsis",
   );
   videoTitle.innerHTML = `<p class="text-center mb-2 text-xs truncate">${result.videoDetail.metadata.filename}</p>`;
   return videoTitle;
@@ -202,7 +200,7 @@ function createIframeContainer(result) {
   iframeElement.height = 140;
   iframeElement.src = `${result.videoDetail.source.url.replace(
     "watch?v=",
-    "embed/"
+    "embed/",
   )}?start=${Math.round(result.start)}&end=${Math.round(result.end)}`;
   iframeElement.allow =
     "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
@@ -221,7 +219,7 @@ function createResultDetails(result) {
 
   const detailsText = document.createElement("p");
   detailsText.innerText = `start: ${Math.round(
-    result.start
+    result.start,
   )}, end: ${Math.round(result.end)} | `;
   detailsText.appendChild(confidenceSpan);
   resultDetails.appendChild(detailsText);
@@ -327,7 +325,7 @@ async function fetchFromServer(url) {
 
 async function getVideos(page = 1) {
   return fetchFromServer(
-    `${SERVER}videos?page_limit=${PAGE_LIMIT}&page=${page}`
+    `${SERVER}videos?page_limit=${PAGE_LIMIT}&page=${page}`,
   );
 }
 
@@ -343,7 +341,7 @@ async function getVideo(videoId) {
 async function searchByImage() {
   const imageSrc = carouselImg.src.split("/").pop();
   const data = await fetchFromServer(
-    `${SERVER}search?imageSrc=${encodeURIComponent(imageSrc)}`
+    `${SERVER}search?imageSrc=${encodeURIComponent(imageSrc)}`,
   );
   if (data) {
     nextPageToken = data.pageInfo.nextPageToken;
@@ -386,7 +384,7 @@ function createVideoContainer(video) {
     "items-center",
     "p-3",
     "gap-1",
-    "my-4"
+    "my-4",
   );
 
   const iframeElement = document.createElement("iframe");
@@ -424,7 +422,7 @@ function createPageButton(pageNumber, currentPage) {
     "hover:border",
     "hover:border-slate-200",
     "transition",
-    "duration-200"
+    "duration-200",
   );
 
   if (pageNumber === currentPage) {
@@ -443,7 +441,7 @@ async function getVideoOfVideos(page = 1) {
 
   if (videosResponse.videos.length > 0) {
     const videosDetail = await Promise.all(
-      videosResponse.videos.map((video) => getVideo(video.id))
+      videosResponse.videos.map((video) => getVideo(video.id)),
     );
 
     return { videosDetail, pageInfo: videosResponse.page_info };
