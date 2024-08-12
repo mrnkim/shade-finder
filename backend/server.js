@@ -61,7 +61,6 @@ app.get(
     const { videoId } = req.params;
 
     const video = await client.index.video.retrieve(INDEX_ID, videoId);
-    console.log("🚀 > asyncHandler > video=", video);
 
     res.json({
       metadata: video.metadata,

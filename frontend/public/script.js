@@ -67,7 +67,6 @@ async function handleSearchButtonClick() {
 
   try {
     const { searchResults } = await searchByImage();
-    console.log("🚀 > handleSearchButtonClick > searchResults=", searchResults);
 
     searchResultContainer.removeChild(loadingSpinnerContainer);
 
@@ -148,7 +147,6 @@ async function showSearchResults(searchResults) {
   searchResults.forEach(displaySearchResult);
 
   if (nextPageToken) {
-    console.log("🚀 > showSearchResults > nextPageToken=", nextPageToken);
     addPaginationButton();
   } else {
     removeExistingButton();
@@ -364,7 +362,6 @@ async function getVideo(videoId) {
   }
   const videoDetail = await fetchFromServer(`${SERVER}videos/${videoId}`);
   videoCache.set(videoId, videoDetail);
-  console.log("🚀 > getVideo > videoDetail=", videoDetail)
   return videoDetail;
 }
 
@@ -374,7 +371,6 @@ async function searchByImage() {
     `${SERVER}search?imageSrc=${encodeURIComponent(imageSrc)}`
   );
   if (data) {
-    console.log("🚀 > searchByImage > data=", data);
     nextPageToken = data.pageInfo.nextPageToken;
     return data;
   }
