@@ -114,8 +114,8 @@ function displayNoResultsMessage() {
   noResultsMessage.textContent = "No search results found :(";
   noResultsMessage.classList.add("text-center", "my-4");
 
-  const backToStartButton = createBackToStartButton();
-  backToStartButton.classList.add(
+  const backToHomeButton = createBackToHomeButton();
+  backToHomeButton.classList.add(
     "flex",
     "justify-center",
     "items-center",
@@ -125,7 +125,7 @@ function displayNoResultsMessage() {
   );
 
   noResultsContainer.appendChild(noResultsMessage);
-  noResultsContainer.appendChild(backToStartButton);
+  noResultsContainer.appendChild(backToHomeButton);
 
   searchResultContainer.appendChild(noResultsContainer);
 }
@@ -152,7 +152,7 @@ async function showSearchResults(searchResults) {
     addPaginationButton();
   } else {
     removeExistingButton();
-    appendFinalButtons();
+    appendBackToHomeButton();
   }
 }
 
@@ -285,17 +285,14 @@ function removeExistingButton() {
   }
 }
 
-function appendFinalButtons() {
-  const buttonsContainer = document.createElement("div");
-  buttonsContainer.classList.add("flex", "justify-center", "gap-12", "my-4");
+function appendBackToHomeButton() {
+  const buttonContainer = document.createElement("div");
+  buttonContainer.classList.add("flex", "justify-center", "gap-12", "my-4");
 
-  const backToTopButton = createBackToTopButton();
-  const backToStartButton = createBackToStartButton();
+  const backToHomeButton = createBackToHomeButton();
+  buttonContainer.appendChild(backToHomeButton);
 
-  buttonsContainer.appendChild(backToTopButton);
-  buttonsContainer.appendChild(backToStartButton);
-
-  searchResultContainer.appendChild(buttonsContainer);
+  searchResultContainer.appendChild(buttonContainer);
 }
 
 function addConfidenceClass(confidence) {
@@ -329,26 +326,16 @@ function addConfidenceClass(confidence) {
   return confidenceClasses[confidence] || confidenceClasses.default;
 }
 
-function createBackToTopButton() {
-  const backToTopButton = document.createElement("button");
-  backToTopButton.innerHTML =
-    '<i class="fa-solid fa-angles-up"></i> Back to Top';
-  backToTopButton.addEventListener("click", () => {
-    searchButton.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-  return backToTopButton;
-}
-
-function createBackToStartButton() {
-  const backToStartButton = document.createElement("button");
-  backToStartButton.innerHTML =
-    '<i class="fa-solid fa-rotate-left"></i> Back to Start';
-  backToStartButton.addEventListener("click", () => {
+function createBackToHomeButton() {
+  const backToHomeButton = document.createElement("button");
+  backToHomeButton.innerHTML =
+    '<i class="fa-solid fa-rotate-left"></i> Back to Home';
+  backToHomeButton.addEventListener("click", () => {
     searchResultContainer.classList.add("hidden");
     videoListContainer.classList.remove("hidden");
     showVideos();
   });
-  return backToStartButton;
+  return backToHomeButton;
 }
 
 /********************** Server requests ***********************/
