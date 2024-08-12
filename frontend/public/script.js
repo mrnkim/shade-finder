@@ -26,9 +26,6 @@ const prevButton = document.getElementById("prev");
 const nextButton = document.getElementById("next");
 const videoList = document.getElementById("video-list");
 const videoListPagination = document.getElementById("video-list-pagination");
-const searchResultPagination = document.getElementById(
-  "search-result-pagination"
-);
 const searchButton = document.getElementById("search");
 const videoListContainer = document.getElementById("video-list-container");
 const searchResultContainer = document.getElementById(
@@ -61,7 +58,6 @@ async function handleSearchButtonClick() {
 
   nextPageToken = null;
   searchResultContainer.innerHTML = "";
-  searchResultPagination.innerHTML = "";
   videoListContainer.classList.add("hidden");
   searchResultContainer.classList.remove("hidden");
   searchResultList.innerHTML = "";
@@ -135,8 +131,6 @@ function displayNoResultsMessage() {
 }
 
 async function showSearchResults(searchResults) {
-  searchResultPagination.innerHTML = "";
-
   await Promise.all(
     searchResults.map(async (result) => {
       try {
@@ -157,7 +151,8 @@ async function showSearchResults(searchResults) {
     console.log("🚀 > showSearchResults > nextPageToken=", nextPageToken);
     addPaginationButton();
   } else {
-    appendFinalButtons(); // Append final buttons when no more pages
+    removeExistingButton();
+    appendFinalButtons();
   }
 }
 
@@ -258,8 +253,16 @@ function toggleThumbnailAndIframe(thumbnailContainer, iframeContainer, result) {
 }
 
 function addPaginationButton() {
+  removeExistingButton();
+
+  const pageButtonContainer = document.createElement("div");
+  pageButtonContainer.id = "show-more-button";
+  pageButtonContainer.classList.add("flex", "justify-center", "my-4");
+
   const pageButton = document.createElement("button");
   pageButton.innerHTML = '<i class="fa-solid fa-chevron-up"></i> Show More';
+  pageButton.classList.add("show-more-btn");
+
   pageButton.addEventListener("click", async () => {
     const loadingSpinnerContainer = showLoadingSpinner();
     searchResultContainer.appendChild(loadingSpinnerContainer);
@@ -271,8 +274,15 @@ function addPaginationButton() {
     showSearchResults(nextPageResults.searchResults);
     nextPageToken = nextPageResults.pageInfo.nextPageToken || null;
   });
-  searchResultPagination.appendChild(pageButton);
-  searchResultContainer.appendChild(searchResultPagination);
+  pageButtonContainer.appendChild(pageButton);
+  searchResultContainer.appendChild(pageButtonContainer);
+}
+
+function removeExistingButton() {
+  const existingButton = document.getElementById("show-more-button");
+  if (existingButton) {
+    existingButton.remove();
+  }
 }
 
 function appendFinalButtons() {
@@ -439,15 +449,15 @@ function createVideoContainer(video) {
 function updatePaginationButtons(pageInfo, currentPage) {
   videoListPagination.innerHTML = "";
   for (let i = 1; i <= pageInfo.totalPage; i++) {
-    const pageButton = createPageButton(i, currentPage);
-    videoListPagination.appendChild(pageButton);
+    const pageButtonContainer = createPageButton(i, currentPage);
+    videoListPagination.appendChild(pageButtonContainer);
   }
 }
 
 function createPageButton(pageNumber, currentPage) {
-  const pageButton = document.createElement("button");
-  pageButton.textContent = pageNumber;
-  pageButton.classList.add(
+  const pageButtonContainer = document.createElement("button");
+  pageButtonContainer.textContent = pageNumber;
+  pageButtonContainer.classList.add(
     "bg-lime-100",
     "px-3",
     "py-1",
@@ -459,10 +469,10 @@ function createPageButton(pageNumber, currentPage) {
   );
 
   if (pageNumber === currentPage) {
-    pageButton.classList.add("bg-slate-200", "font-medium");
-    pageButton.disabled = true;
+    pageButtonContainer.classList.add("bg-slate-200", "font-medium");
+    pageButtonContainer.disabled = true;
   } else {
-    pageButton.classList.add("bg-transparent");
+    pageButtonContainer.classList.add("bg-transparent");
     pageButton.addEventListener("click", () => showVideos(pageNumber));
   }
 
