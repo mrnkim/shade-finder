@@ -455,9 +455,9 @@ function updatePaginationButtons(pageInfo, currentPage) {
 }
 
 function createPageButton(pageNumber, currentPage) {
-  const pageButtonContainer = document.createElement("button");
-  pageButtonContainer.textContent = pageNumber;
-  pageButtonContainer.classList.add(
+  const pageButton = document.createElement("button");
+  pageButton.textContent = pageNumber;
+  pageButton.classList.add(
     "bg-lime-100",
     "px-3",
     "py-1",
@@ -469,10 +469,10 @@ function createPageButton(pageNumber, currentPage) {
   );
 
   if (pageNumber === currentPage) {
-    pageButtonContainer.classList.add("bg-slate-200", "font-medium");
-    pageButtonContainer.disabled = true;
+    pageButton.classList.add("bg-slate-200", "font-medium");
+    pageButton.disabled = true;
   } else {
-    pageButtonContainer.classList.add("bg-transparent");
+    pageButton.classList.add("bg-transparent");
     pageButton.addEventListener("click", () => showVideos(pageNumber));
   }
 
