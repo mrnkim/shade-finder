@@ -54,25 +54,20 @@ app.get(
   })
 );
 
-//TODO: Change to SDK (once the response includes source object)
 /** Get a video of an index */
 app.get(
   "/videos/:videoId",
   asyncHandler(async (req, res, next) => {
     const { videoId } = req.params;
 
-    const options = {
-      method: "GET",
-      url: `${API_BASE_URL}/indexes/${INDEX_ID}/videos/${videoId}`,
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": API_KEY,
-      },
-    };
+    const video = await client.index.video.retrieve(INDEX_ID, videoId);
+    console.log("🚀 > asyncHandler > video=", video);
 
-    const apiResponse = await axios.request(options);
-
-    res.json(apiResponse.data);
+    res.json({
+      metadata: video.metadata,
+      hls: video.hls,
+      source: video.source,
+    });
   })
 );
 

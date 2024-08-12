@@ -364,6 +364,7 @@ async function getVideo(videoId) {
   }
   const videoDetail = await fetchFromServer(`${SERVER}videos/${videoId}`);
   videoCache.set(videoId, videoDetail);
+  console.log("🚀 > getVideo > videoDetail=", videoDetail)
   return videoDetail;
 }
 

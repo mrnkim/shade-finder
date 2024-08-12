@@ -16,6 +16,6 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
-    "twelvelabs-js": "^0.2.4"
+    "twelvelabs-js": "^0.2.5"
   }
 }
