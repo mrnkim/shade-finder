@@ -20,10 +20,6 @@ const PORT = 5001;
 const API_KEY = process.env.TWELVE_LABS_API_KEY;
 const INDEX_ID = process.env.TWELVE_LABS_INDEX_ID;
 
-const THRESHOLD = "medium";
-const PAGE_LIMIT = 12;
-const CONFIDENCE_LEVEL = 0.6;
-
 const client = new TwelveLabs({ apiKey: API_KEY });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
@@ -78,7 +74,7 @@ app.get(
 app.get(
   "/search",
   asyncHandler(async (req, res, next) => {
-    const { imageSrc } = req.query;
+    const { imageSrc, threshold, pageLimit, adjustConfidenceLevel } = req.query;
 
     const imagePath = path.join(
       __dirname,
@@ -96,9 +92,9 @@ app.get(
       queryMediaFile: fs.createReadStream(imagePath),
       queryMediaType: "image",
       options: ["visual"],
-      threshold: THRESHOLD,
-      pageLimit: PAGE_LIMIT,
-      adjustConfidenceLevel: CONFIDENCE_LEVEL,
+      threshold: threshold,
+      pageLimit: pageLimit,
+      adjustConfidenceLevel: adjustConfidenceLevel,
     });
 
     res.json({

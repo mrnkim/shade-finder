@@ -7,7 +7,11 @@ const videoCache = new Map();
 const SERVER = window.location.hostname?.includes("replit")
   ? `https://${window.location.hostname}/`
   : "http://localhost:5001/";
-const PAGE_LIMIT = 12;
+
+const VIDEO_PAGE_LIMIT = 12;
+const THRESHOLD = "medium";
+const SEARCH_PAGE_LIMIT = 12;
+const CONFIDENCE_LEVEL = 0.6;
 
 /********************** Images Data ***************************/
 const images = [
@@ -232,7 +236,11 @@ function createResultDetails(result) {
 
   const confidenceSpan = document.createElement("span");
   confidenceSpan.innerText = result.confidence;
-  confidenceSpan.classList.add(...addConfidenceClass(result.confidence));
+  confidenceSpan.classList.add(
+    ...addConfidenceClass(result.confidence),
+    "ml-2"
+  );
+  confidenceSpan.style.display = "inline-block";
 
   const detailsText = document.createElement("p");
   detailsText.innerText = `${Math.floor(result.start / 60)
@@ -243,7 +251,7 @@ function createResultDetails(result) {
     .toString()
     .padStart(2, "0")}:${Math.floor(result.end % 60)
     .toString()
-    .padStart(2, "0")}     `;
+    .padStart(2, "0")}`;
   detailsText.appendChild(confidenceSpan);
   resultDetails.appendChild(detailsText);
 
@@ -358,7 +366,7 @@ async function fetchFromServer(url) {
 
 async function getVideos(page = 1) {
   return fetchFromServer(
-    `${SERVER}videos?page_limit=${PAGE_LIMIT}&page=${page}`
+    `${SERVER}videos?page_limit=${VIDEO_PAGE_LIMIT}&page=${page}`
   );
 }
 
@@ -374,7 +382,9 @@ async function getVideo(videoId) {
 async function searchByImage() {
   const imageSrc = carouselImg.src.split("/").pop();
   const data = await fetchFromServer(
-    `${SERVER}search?imageSrc=${encodeURIComponent(imageSrc)}`
+    `${SERVER}search?imageSrc=${encodeURIComponent(
+      imageSrc
+    )}&threshold=${THRESHOLD}&pageLimit=${SEARCH_PAGE_LIMIT}&adjustConfidenceLevel=${CONFIDENCE_LEVEL}`
   );
   if (data) {
     nextPageToken = data.pageInfo.nextPageToken;

@@ -606,8 +606,24 @@ video {
   margin-bottom: 0.5rem;
 }
 
+.ml-8 {
+  margin-left: 2rem;
+}
+
+.ml-3 {
+  margin-left: 0.75rem;
+}
+
+.ml-2 {
+  margin-left: 0.5rem;
+}
+
 .block {
   display: block;
+}
+
+.inline-block {
+  display: inline-block;
 }
 
 .flex {
