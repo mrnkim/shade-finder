@@ -235,9 +235,15 @@ function createResultDetails(result) {
   confidenceSpan.classList.add(...addConfidenceClass(result.confidence));
 
   const detailsText = document.createElement("p");
-  detailsText.innerText = `start: ${Math.round(
-    result.start
-  )}, end: ${Math.round(result.end)} | `;
+  detailsText.innerText = `${Math.floor(result.start / 60)
+    .toString()
+    .padStart(2, "0")}:${Math.floor(result.start % 60)
+    .toString()
+    .padStart(2, "0")}~${Math.floor(result.end / 60)
+    .toString()
+    .padStart(2, "0")}:${Math.floor(result.end % 60)
+    .toString()
+    .padStart(2, "0")}     `;
   detailsText.appendChild(confidenceSpan);
   resultDetails.appendChild(detailsText);
 
