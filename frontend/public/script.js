@@ -414,7 +414,7 @@ async function showVideos(page = 1) {
       videoList.appendChild(videoContainer);
     });
 
-    updatePaginationButtons(pageInfo, page);
+    createPaginationButtons(pageInfo, page);
   }
 }
 
@@ -446,7 +446,7 @@ function createVideoContainer(video) {
   return videoContainer;
 }
 
-function updatePaginationButtons(pageInfo, currentPage) {
+function createPaginationButtons(pageInfo, currentPage) {
   videoListPagination.innerHTML = "";
   for (let i = 1; i <= pageInfo.totalPage; i++) {
     const pageButtonContainer = createPageButton(i, currentPage);
