@@ -3,9 +3,9 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const asyncHandler = require("express-async-handler");
 const fs = require("fs");
 const path = require("path");
-const asyncHandler = require("express-async-handler");
 const { TwelveLabs } = require("twelvelabs-js");
 
 dotenv.config();
@@ -37,19 +37,19 @@ app.get(
   asyncHandler(async (req, res, next) => {
     const { page_limit, page } = req.query;
 
-    const pagination = await client.index.video.listPagination(INDEX_ID, {
+    const videosResponse = await client.index.video.listPagination(INDEX_ID, {
       pageLimit: page_limit,
       page: page,
     });
 
-    const videos = pagination.data.map((video) => ({
+    const videos = videosResponse.data.map((video) => ({
       id: video.id,
       metadata: video.metadata,
     }));
 
     res.json({
       videos,
-      page_info: pagination.pageInfo,
+      page_info: videosResponse.pageInfo,
     });
   })
 );
@@ -60,12 +60,12 @@ app.get(
   asyncHandler(async (req, res, next) => {
     const { videoId } = req.params;
 
-    const video = await client.index.video.retrieve(INDEX_ID, videoId);
+    const videoResponse = await client.index.video.retrieve(INDEX_ID, videoId);
 
     res.json({
-      metadata: video.metadata,
-      hls: video.hls,
-      source: video.source,
+      metadata: videoResponse.metadata,
+      hls: videoResponse.hls,
+      source: videoResponse.source,
     });
   })
 );
@@ -87,7 +87,7 @@ app.get(
       return res.status(404).json({ error: "Image not found" });
     }
 
-    const imageResult = await client.search.query({
+    const searchResponse = await client.search.query({
       indexId: INDEX_ID,
       queryMediaFile: fs.createReadStream(imagePath),
       queryMediaType: "image",
@@ -98,8 +98,8 @@ app.get(
     });
 
     res.json({
-      searchResults: imageResult.data,
-      pageInfo: imageResult.pageInfo,
+      searchResults: searchResponse.data,
+      pageInfo: searchResponse.pageInfo,
     });
   })
 );
@@ -110,11 +110,11 @@ app.get(
   asyncHandler(async (req, res, next) => {
     const { pageToken } = req.params;
 
-    let searchResults = await client.search.byPageToken(`${pageToken}`);
+    let searchByPageResponse = await client.search.byPageToken(`${pageToken}`);
 
     res.json({
-      searchResults: searchResults.data,
-      pageInfo: searchResults.pageInfo,
+      searchResults: searchByPageResponse.data,
+      pageInfo: searchByPageResponse.pageInfo,
     });
   })
 );
