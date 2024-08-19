@@ -66,7 +66,7 @@ async function handleSearchButtonClick() {
   searchResultContainer.classList.remove("hidden");
   searchResultList.innerHTML = "";
 
-  const loadingSpinnerContainer = showLoadingSpinner();
+  const loadingSpinnerContainer = createLoadingSpinner();
   searchResultContainer.appendChild(loadingSpinnerContainer);
 
   try {
@@ -92,7 +92,7 @@ function toggleSearchButton(enable) {
   nextButton.disabled = !enable;
 }
 
-function showLoadingSpinner() {
+function createLoadingSpinner() {
   const loadingSpinnerContainer = document.createElement("div");
   loadingSpinnerContainer.classList.add(
     "flex",
@@ -151,7 +151,7 @@ async function showSearchResults(searchResults) {
   searchResults.forEach(displaySearchResult);
 
   if (nextPageToken) {
-    addPaginationButton();
+    createShowMoreButton();
   } else {
     removeExistingButton();
     appendBackToHomeButton();
@@ -264,19 +264,18 @@ function toggleThumbnailAndIframe(thumbnailContainer, iframeContainer, result) {
   iframeContainer.querySelector("iframe").src += "&autoplay=1";
 }
 
-function addPaginationButton() {
+function createShowMoreButton() {
   removeExistingButton();
 
-  const pageButtonContainer = document.createElement("div");
-  pageButtonContainer.id = "show-more-button";
-  pageButtonContainer.classList.add("flex", "justify-center", "my-4");
+  const showMoreButtonContainer = document.createElement("div");
+  showMoreButtonContainer.id = "show-more-button";
+  showMoreButtonContainer.classList.add("flex", "justify-center", "my-4");
 
-  const pageButton = document.createElement("button");
-  pageButton.innerHTML = '<i class="fa-solid fa-chevron-up"></i> Show More';
-  pageButton.classList.add("show-more-btn");
+  const showMoreButton = document.createElement("button");
+  showMoreButton.innerHTML = '<i class="fa-solid fa-chevron-up"></i> Show More';
 
-  pageButton.addEventListener("click", async () => {
-    const loadingSpinnerContainer = showLoadingSpinner();
+  showMoreButton.addEventListener("click", async () => {
+    const loadingSpinnerContainer = createLoadingSpinner();
     searchResultContainer.appendChild(loadingSpinnerContainer);
 
     const nextPageResults = await getNextSearchResults(nextPageToken);
@@ -286,8 +285,8 @@ function addPaginationButton() {
     showSearchResults(nextPageResults.searchResults);
     nextPageToken = nextPageResults.pageInfo.nextPageToken || null;
   });
-  pageButtonContainer.appendChild(pageButton);
-  searchResultContainer.appendChild(pageButtonContainer);
+  showMoreButtonContainer.appendChild(showMoreButton);
+  searchResultContainer.appendChild(showMoreButtonContainer);
 }
 
 function removeExistingButton() {
