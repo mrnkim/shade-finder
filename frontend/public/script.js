@@ -3,6 +3,7 @@
 let currImgIndex = 0;
 let nextPageToken;
 const videoCache = new Map();
+let activeIframe = null;
 
 const SERVER = window.location.hostname?.includes("replit")
   ? `https://${window.location.hostname}/`
@@ -259,9 +260,18 @@ function createResultDetails(result) {
 }
 
 function toggleThumbnailAndIframe(thumbnailContainer, iframeContainer, result) {
+  if (
+    activeIframe &&
+    activeIframe !== iframeContainer.querySelector("iframe")
+  ) {
+    activeIframe.src = ""; // Stop the previous video
+  }
+
   thumbnailContainer.style.display = "none";
   iframeContainer.style.display = "block";
   iframeContainer.querySelector("iframe").src += "&autoplay=1";
+
+  activeIframe = iframeContainer.querySelector("iframe");
 }
 
 function createShowMoreButton() {
