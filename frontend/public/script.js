@@ -261,18 +261,36 @@ function createResultDetails(result) {
 }
 
 function toggleThumbnailAndIframe(thumbnailContainer, iframeContainer, result) {
-  if (
-    activeIframe &&
-    activeIframe !== iframeContainer.querySelector("iframe")
-  ) {
-    activeIframe.src = ""; // Stop the previous video
+  const iframeElement = iframeContainer.querySelector("iframe");
+
+  // If there is an active iframe and it's not the same as the one being clicked
+  if (activeIframe && activeIframe !== iframeElement) {
+    const activeSrc = activeIframe.src;
+    activeIframe.src = ""; // Stop the currently playing video
+    
+    activeIframe.parentNode.previousElementSibling.style.display = "block"; // Show the thumbnail
+    activeIframe.parentNode.style.display = "none"; // Hide the iframe
+
+    activeIframe.src = activeSrc.replace("&autoplay=1", ""); // Reset the src to stop autoplay
   }
 
-  thumbnailContainer.style.display = "none";
-  iframeContainer.style.display = "block";
-  iframeContainer.querySelector("iframe").src += "&autoplay=1";
+  if (thumbnailContainer.style.display === "none") {
+    // The iframe is currently visible, so switch back to the thumbnail
+    thumbnailContainer.style.display = "block";
+    iframeContainer.style.display = "none";
+  } else {
+    // The thumbnail is currently visible, so switch to the iframe
+    thumbnailContainer.style.display = "none";
+    iframeContainer.style.display = "block";
 
-  activeIframe = iframeContainer.querySelector("iframe");
+    // Only update the iframe src if it's not already set to autoplay
+    if (!iframeElement.src.includes("autoplay=1")) {
+      iframeElement.src += "&autoplay=1";
+    }
+
+    // Set this iframe as the active one
+    activeIframe = iframeElement;
+  }
 }
 
 function createShowMoreButton() {
