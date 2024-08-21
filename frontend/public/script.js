@@ -29,6 +29,7 @@ const carouselImg = document.getElementById("carousel-image");
 const colorLabel = document.getElementById("color-label");
 const prevButton = document.getElementById("prev");
 const nextButton = document.getElementById("next");
+const videoListLoading = document.getElementById("video-list-loading");
 const videoList = document.getElementById("video-list");
 const videoListPagination = document.getElementById("video-list-pagination");
 const searchButton = document.getElementById("search");
@@ -413,17 +414,30 @@ function updateCarousel() {
 }
 
 async function showVideos(page = 1) {
-  const { videosDetail, pageInfo } = await getVideoOfVideos(page);
+  videoList.innerHTML = "";
 
-  if (videosDetail) {
-    videoList.innerHTML = "";
+  videoListLoading.classList.add("min-h-[300px]");
 
-    videosDetail.forEach((video) => {
-      const videoContainer = createVideoContainer(video);
-      videoList.appendChild(videoContainer);
-    });
+  const loadingSpinnerContainer = createLoadingSpinner();
+  videoListLoading.append(loadingSpinnerContainer);
 
-    createPaginationButtons(pageInfo, page);
+  try {
+    const { videosDetail, pageInfo } = await getVideoOfVideos(page);
+
+    videoListLoading.removeChild(loadingSpinnerContainer);
+
+    if (videosDetail) {
+      videosDetail.forEach((video) => {
+        const videoContainer = createVideoContainer(video);
+        videoList.appendChild(videoContainer);
+      });
+
+      videoListLoading.classList.remove("min-h-[300px]");
+
+      createPaginationButtons(pageInfo, page);
+    }
+  } catch (error) {
+    console.error("Error fetching videos:", error);
   }
 }
 
@@ -432,16 +446,16 @@ function createVideoContainer(video) {
   videoContainer.classList.add(
     "flex",
     "flex-col",
-    "justify-center",
     "items-center",
     "p-3",
     "gap-1",
-    "my-4"
+    "my-4",
+    "h-full"
   );
 
   const iframeElement = document.createElement("iframe");
-  iframeElement.width = 220;
-  iframeElement.height = 140;
+  iframeElement.width = "100%";
+  iframeElement.height = "auto";
   iframeElement.src = video.source.url.replace("watch?v=", "embed/");
   iframeElement.allow =
     "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
