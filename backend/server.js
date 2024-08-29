@@ -11,6 +11,7 @@ const { TwelveLabs } = require("twelvelabs-js");
 dotenv.config();
 
 const app = express();
+module.exports = app;
 
 app.use(express.json());
 app.use(cors());
