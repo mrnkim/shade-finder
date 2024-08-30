@@ -37,4 +37,12 @@ describe("API Endpoints", () => {
       expect(Array.isArray(res.body.searchResults)).toBe(true);
     }
   });
+
+  it("should return search results based on an page token", async () => {
+    const pageToken = "pageToken";
+    const res = await request(app).get(`/search/${pageToken}`);
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty("searchResults");
+    expect(Array.isArray(res.body.searchResults)).toBe(true);
+  });
 });
