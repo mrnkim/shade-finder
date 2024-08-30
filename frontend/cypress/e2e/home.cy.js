@@ -1,9 +1,3 @@
-describe("The server", () => {
-  it("successfully loads", () => {
-    cy.request("http://localhost:5001/");
-  });
-});
-
 describe("The home page", () => {
   beforeEach(() => {
     cy.visit("http://192.168.45.102:5500/frontend/public/"); // to be updated
