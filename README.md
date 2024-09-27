@@ -8,7 +8,13 @@ Shade Finder is an app designed to pinpoint moments in beauty and fashion videos
 
 Powered by [Twelve Labs Image to Video Search](https://docs.twelvelabs.io/docs/image-queries), the app excels at finding videos featuring objects, colors, and shapes that closely match the images you provide. Ideal for beauty enthusiasts and fashion aficionados, Shade Finder ensures you never miss a moment of your favorite shades in action.
 
-<img src="./App.png" alt="frontPage screenshot" />
+⭐️ Check out the [Demo](https://shade-finder-vercel-client.vercel.app/)!
+
+<div align="center">
+  <a href="https://shade-finder-vercel-client.vercel.app/">
+    <img src="App.png" alt="shadefinder_frontpage" />
+  </a>
+</div>
 
 ### Built With
 
