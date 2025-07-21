@@ -59,57 +59,86 @@ app.use((err, req, res, next) => {
 app.get(
   "/videos",
   asyncHandler(async (req, res, next) => {
-    const { page_limit, page } = req.query;
+    const { page_limit = 12, page = 1 } = req.query;
+
+    console.log("Received request for videos with params:", {
+      page_limit,
+      page,
+      parsedLimit: parseInt(page_limit),
+      parsedPage: parseInt(page),
+    });
 
     try {
-      console.log("Fetching videos through index API...");
-      const videosResponse = await client.index.video.list(INDEX_ID, {
-        page: parseInt(page) || 1,
-        pageLimit: parseInt(page_limit) || 10,
+      const videosResponse = await client.index.video.listPagination(INDEX_ID, {
+        pageLimit: parseInt(page_limit),
+        page: parseInt(page),
+        sortBy: "created_at",
+        sortOption: "desc",
       });
 
-      // Transform the response to match frontend expectations
-      const videos = videosResponse.map((video) => {
-        const transformedVideo = {
-          id: video.id,
-          metadata: {
-            filename:
-              video.systemMetadata?.filename ||
-              video.userMetadata?.filename ||
-              "Untitled",
-            title: video.systemMetadata?.title || video.userMetadata?.title,
-            description:
-              video.systemMetadata?.description ||
-              video.userMetadata?.description,
-          },
-          source: {
-            url: video.hls?.videoUrl || video.source?.url || "",
-          },
-        };
-        console.log(`Video ${video.id} URL:`, video.hls?.videoUrl);
-        return transformedVideo;
+      console.log("Raw API response structure:", {
+        responseType: typeof videosResponse,
+        hasData: !!videosResponse?.data,
+        dataLength: videosResponse?.data?.length,
+        hasPageInfo: !!videosResponse?.pageInfo,
+        pageInfo: videosResponse?.pageInfo,
       });
 
+      if (!videosResponse?.data) {
+        return res.json({
+          videos: [],
+          page_info: {
+            page: parseInt(page),
+            page_limit: parseInt(page_limit),
+            total_count: 0,
+            total_page: 0,
+          },
+        });
+      }
+
+      const videos = videosResponse.data.map((video) => ({
+        id: video.id,
+        metadata: {
+          filename:
+            video.systemMetadata?.filename ||
+            video.userMetadata?.filename ||
+            "Untitled",
+          title: video.systemMetadata?.title || video.userMetadata?.title,
+          description:
+            video.systemMetadata?.description ||
+            video.userMetadata?.description,
+        },
+        source: {
+          url: video.hls?.videoUrl || video.source?.url || "",
+        },
+      }));
+
+      // Use the pageInfo from the API response
       const response = {
         videos,
         page_info: {
-          page: parseInt(page) || 1,
-          page_limit: parseInt(page_limit) || 10,
-          total_count: videos.length,
+          page: videosResponse.pageInfo.page,
+          page_limit: videosResponse.pageInfo.limitPerPage,
+          total_count: videosResponse.pageInfo.totalResults,
+          total_page: videosResponse.pageInfo.totalPage,
         },
       };
 
-      console.log("Final response example:", {
+      console.log("Sending response with pagination info:", {
         totalVideos: videos.length,
-        firstVideo: response.videos[0],
+        pageInfo: response.page_info,
+        rawPageInfo: videosResponse.pageInfo,
+        currentPage: parseInt(page),
       });
 
       res.json(response);
     } catch (error) {
-      console.error("Error fetching videos:", {
+      console.error("Error in /videos route:", {
         name: error.name,
         message: error.message,
         status: error.status,
+        page,
+        page_limit,
       });
       throw error;
     }

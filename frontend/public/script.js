@@ -393,9 +393,21 @@ async function fetchFromServer(url) {
 }
 
 async function getVideos(page = 1) {
-  return fetchFromServer(
-    `${SERVER}videos?page_limit=${VIDEO_PAGE_LIMIT}&page=${page}`
-  );
+  console.log("Requesting videos for page:", page);
+  try {
+    const response = await fetchFromServer(
+      `${SERVER}videos?page_limit=${VIDEO_PAGE_LIMIT}&page=${page}`
+    );
+    console.log("Server response for page", page, ":", {
+      videosCount: response.videos?.length,
+      pageInfo: response.page_info,
+      firstVideoId: response.videos?.[0]?.id,
+    });
+    return response;
+  } catch (error) {
+    console.error("Error fetching videos:", error);
+    throw error;
+  }
 }
 
 async function getVideo(videoId) {
@@ -431,9 +443,174 @@ function updateCarousel() {
   colorLabel.textContent = images[currImgIndex].label;
 }
 
-async function showVideos(page = 1) {
-  videoList.innerHTML = "";
+async function getVideoOfVideos(page = 1) {
+  try {
+    console.log("Getting videos for page:", page);
+    const videosResponse = await getVideos(page);
+    console.log("Full videos response:", {
+      hasVideos: !!videosResponse?.videos,
+      videosCount: videosResponse?.videos?.length,
+      pageInfo: videosResponse?.page_info,
+    });
 
+    if (!videosResponse?.videos?.length) {
+      console.log("No videos found for page:", page);
+      return {
+        videosDetail: [],
+        pageInfo: {
+          page: page,
+          page_limit: VIDEO_PAGE_LIMIT,
+          total_count: 0,
+          total_page: 0,
+        },
+      };
+    }
+
+    const result = {
+      videosDetail: videosResponse.videos,
+      pageInfo: videosResponse.page_info,
+    };
+
+    console.log("Processed video response:", {
+      videosCount: result.videosDetail.length,
+      pageInfo: result.pageInfo,
+      currentPage: page,
+      totalPages: result.pageInfo.total_page,
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error in getVideoOfVideos:", error);
+    throw error;
+  }
+}
+
+function createPageButton(pageNumber, currentPage) {
+  console.log("Creating page button:", {
+    pageNumber,
+    currentPage,
+    isActive: pageNumber === currentPage,
+  });
+
+  const pageButton = document.createElement("button");
+  pageButton.textContent = pageNumber;
+  pageButton.classList.add(
+    "px-4", // 더 넓은 패딩
+    "py-2", // 더 높은 패딩
+    "rounded-lg", // 더 부드러운 모서리
+    "transition",
+    "duration-200",
+    "mx-1",
+    "min-w-[40px]", // 최소 너비 설정
+    "text-lg" // 더 큰 글자 크기
+  );
+
+  if (pageNumber === parseInt(currentPage)) {
+    pageButton.classList.add(
+      "bg-lime-600", // 더 진한 배경색
+      "text-white",
+      "font-bold", // 더 굵은 글자
+      "border-2",
+      "border-lime-700",
+      "shadow-lg", // 더 강한 그림자
+      "scale-110" // 약간 더 크게
+    );
+    pageButton.disabled = true;
+  } else {
+    pageButton.classList.add(
+      "bg-white",
+      "hover:bg-lime-100",
+      "hover:scale-105", // 호버 시 약간 확대
+      "border-2", // 더 두꺼운 테두리
+      "border-lime-300",
+      "text-lime-700" // 라임색 텍스트
+    );
+    pageButton.addEventListener("click", () => showVideos(pageNumber));
+  }
+
+  return pageButton;
+}
+
+function createPaginationButtons(pageInfo, currentPage) {
+  console.log("Creating pagination with:", {
+    pageInfo,
+    currentPage: parseInt(currentPage),
+    totalPages: pageInfo?.total_page,
+    totalCount: pageInfo?.total_count,
+  });
+
+  videoListPagination.innerHTML = "";
+
+  if (!pageInfo?.total_page || pageInfo.total_page <= 1) {
+    console.log("Skipping pagination - single page or no pages");
+    return;
+  }
+
+  // Previous button
+  if (currentPage > 1) {
+    const prevButton = document.createElement("button");
+    prevButton.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+    prevButton.classList.add(
+      "bg-white",
+      "px-4",
+      "py-2",
+      "rounded-lg",
+      "hover:bg-lime-100",
+      "border-2",
+      "border-lime-300",
+      "text-lime-700",
+      "transition",
+      "duration-200",
+      "hover:scale-105"
+    );
+    prevButton.addEventListener("click", () => {
+      console.log("Navigating to previous page:", currentPage - 1);
+      showVideos(currentPage - 1);
+    });
+    videoListPagination.appendChild(prevButton);
+  }
+
+  // Page buttons
+  for (let i = 1; i <= pageInfo.total_page; i++) {
+    const pageButton = createPageButton(i, currentPage);
+    videoListPagination.appendChild(pageButton);
+  }
+
+  // Next button
+  if (currentPage < pageInfo.total_page) {
+    const nextButton = document.createElement("button");
+    nextButton.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+    nextButton.classList.add(
+      "bg-white",
+      "px-4",
+      "py-2",
+      "rounded-lg",
+      "hover:bg-lime-100",
+      "border-2",
+      "border-lime-300",
+      "text-lime-700",
+      "transition",
+      "duration-200",
+      "hover:scale-105"
+    );
+    nextButton.addEventListener("click", () => {
+      console.log("Navigating to next page:", currentPage + 1);
+      showVideos(currentPage + 1);
+    });
+    videoListPagination.appendChild(nextButton);
+  }
+
+  console.log("Pagination buttons created:", {
+    totalButtons: videoListPagination.children.length,
+    hasNext: currentPage < pageInfo.total_page,
+    hasPrev: currentPage > 1,
+    currentPageNumber: currentPage,
+  });
+}
+
+async function showVideos(page = 1) {
+  console.log("Showing videos for page:", page);
+  videoList.innerHTML = "";
   videoListLoading.classList.add("min-h-[300px]");
 
   const loadingSpinnerContainer = createLoadingSpinner();
@@ -441,10 +618,15 @@ async function showVideos(page = 1) {
 
   try {
     const { videosDetail, pageInfo } = await getVideoOfVideos(page);
+    console.log("Got videos response:", {
+      videosCount: videosDetail?.length,
+      pageInfo,
+      currentPage: page,
+    });
 
     videoListLoading.removeChild(loadingSpinnerContainer);
 
-    if (videosDetail) {
+    if (videosDetail?.length > 0) {
       videosDetail.forEach((video) => {
         const videoContainer = createVideoContainer(video);
         videoList.appendChild(videoContainer);
@@ -452,10 +634,20 @@ async function showVideos(page = 1) {
 
       videoListLoading.classList.remove("min-h-[300px]");
 
-      createPaginationButtons(pageInfo, page);
+      if (pageInfo) {
+        createPaginationButtons(pageInfo, page);
+      }
+    } else {
+      videoList.innerHTML =
+        '<div class="text-center text-gray-500">No videos found.</div>';
     }
   } catch (error) {
-    console.error("Error fetching videos:", error);
+    console.error("Error showing videos:", error);
+    videoListLoading.innerHTML = `
+      <div class="text-center text-red-500">
+        Error loading videos. Please try again later.
+      </div>
+    `;
   }
 }
 
@@ -502,51 +694,6 @@ function createVideoContainer(video) {
   }
 
   return videoContainer;
-}
-
-function createPaginationButtons(pageInfo, currentPage) {
-  videoListPagination.innerHTML = "";
-  for (let i = 1; i <= pageInfo.totalPage; i++) {
-    const pageButtonContainer = createPageButton(i, currentPage);
-    videoListPagination.appendChild(pageButtonContainer);
-  }
-}
-
-function createPageButton(pageNumber, currentPage) {
-  const pageButton = document.createElement("button");
-  pageButton.textContent = pageNumber;
-  pageButton.classList.add(
-    "bg-lime-100",
-    "px-3",
-    "py-1",
-    "rounded-full",
-    "hover:border",
-    "hover:border-slate-200",
-    "transition",
-    "duration-200"
-  );
-
-  if (pageNumber === currentPage) {
-    pageButton.classList.add("bg-slate-200", "font-medium");
-    pageButton.disabled = true;
-  } else {
-    pageButton.classList.add("bg-transparent");
-    pageButton.addEventListener("click", () => showVideos(pageNumber));
-  }
-
-  return pageButton;
-}
-
-async function getVideoOfVideos(page = 1) {
-  const videosResponse = await getVideos(page);
-
-  if (videosResponse.videos.length > 0) {
-    console.log("Got videos response:", videosResponse);
-    return {
-      videosDetail: videosResponse.videos,
-      pageInfo: videosResponse.page_info,
-    };
-  }
 }
 
 updateCarousel();
