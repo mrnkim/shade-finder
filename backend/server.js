@@ -23,6 +23,29 @@ const INDEX_ID = process.env.TWELVE_LABS_INDEX_ID;
 
 const client = new TwelveLabs({ apiKey: API_KEY });
 
+// Add debug logs for initialization
+console.log("Initializing server with:");
+console.log("API_KEY exists:", !!API_KEY);
+console.log("API_KEY starts with:", API_KEY?.substring(0, 8) + "...");
+console.log("INDEX_ID:", INDEX_ID);
+
+// Debug client object
+console.log("TwelveLabs client structure:", {
+  hasClient: !!client,
+  clientKeys: Object.keys(client),
+  hasVideos: !!client?.videos,
+  hasVideo: !!client?.video,
+  hasIndex: !!client?.index,
+  hasIndexes: !!client?.indexes,
+});
+
+try {
+  const { version } = require("twelvelabs-js/package.json");
+  console.log("TwelveLabs SDK version:", version);
+} catch (error) {
+  console.warn("Could not determine TwelveLabs SDK version");
+}
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 /** Global error handler */
@@ -38,20 +61,58 @@ app.get(
   asyncHandler(async (req, res, next) => {
     const { page_limit, page } = req.query;
 
-    const videosResponse = await client.index.video.listPagination(INDEX_ID, {
-      pageLimit: page_limit,
-      page: page,
-    });
+    try {
+      console.log("Fetching videos through index API...");
+      const videosResponse = await client.index.video.list(INDEX_ID, {
+        page: parseInt(page) || 1,
+        pageLimit: parseInt(page_limit) || 10,
+      });
 
-    const videos = videosResponse.data.map((video) => ({
-      id: video.id,
-      metadata: video.metadata,
-    }));
+      // Transform the response to match frontend expectations
+      const videos = videosResponse.map((video) => {
+        const transformedVideo = {
+          id: video.id,
+          metadata: {
+            filename:
+              video.systemMetadata?.filename ||
+              video.userMetadata?.filename ||
+              "Untitled",
+            title: video.systemMetadata?.title || video.userMetadata?.title,
+            description:
+              video.systemMetadata?.description ||
+              video.userMetadata?.description,
+          },
+          source: {
+            url: video.hls?.videoUrl || video.source?.url || "",
+          },
+        };
+        console.log(`Video ${video.id} URL:`, video.hls?.videoUrl);
+        return transformedVideo;
+      });
 
-    res.json({
-      videos,
-      page_info: videosResponse.pageInfo,
-    });
+      const response = {
+        videos,
+        page_info: {
+          page: parseInt(page) || 1,
+          page_limit: parseInt(page_limit) || 10,
+          total_count: videos.length,
+        },
+      };
+
+      console.log("Final response example:", {
+        totalVideos: videos.length,
+        firstVideo: response.videos[0],
+      });
+
+      res.json(response);
+    } catch (error) {
+      console.error("Error fetching videos:", {
+        name: error.name,
+        message: error.message,
+        status: error.status,
+      });
+      throw error;
+    }
   })
 );
 

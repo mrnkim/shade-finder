@@ -267,7 +267,7 @@ function toggleThumbnailAndIframe(thumbnailContainer, iframeContainer, result) {
   if (activeIframe && activeIframe !== iframeElement) {
     const activeSrc = activeIframe.src;
     activeIframe.src = ""; // Stop the currently playing video
-    
+
     activeIframe.parentNode.previousElementSibling.style.display = "block"; // Show the thumbnail
     activeIframe.parentNode.style.display = "none"; // Hide the iframe
 
@@ -460,29 +460,46 @@ async function showVideos(page = 1) {
 }
 
 function createVideoContainer(video) {
-  const videoContainer = document.createElement("div");
-  videoContainer.classList.add(
-    "flex",
-    "flex-col",
-    "items-center",
-    "p-3",
-    "gap-1",
-    "my-4",
-    "h-full"
-  );
+  const template = document.getElementById("video-template");
+  const videoContainer = template.content
+    .cloneNode(true)
+    .querySelector(".video-container");
 
-  const iframeElement = document.createElement("iframe");
-  iframeElement.width = "100%";
-  iframeElement.height = "auto";
-  iframeElement.src = video.source.url.replace("watch?v=", "embed/");
-  iframeElement.allow =
-    "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-  iframeElement.allowFullscreen = true;
+  const titleElement = videoContainer.querySelector(".video-title");
+  titleElement.textContent = video.metadata.filename;
 
-  const videoTitle = document.createElement("div");
-  videoTitle.innerHTML = `<p class="mb-2 text-xs">${video.metadata.filename}</p>`;
+  const videoElement = videoContainer.querySelector("video");
+  const videoUrl = video.source.url;
 
-  videoContainer.append(iframeElement, videoTitle);
+  console.log("Setting up video with URL:", videoUrl);
+
+  if (videoUrl) {
+    if (Hls.isSupported() && videoUrl.includes(".m3u8")) {
+      console.log("Using HLS.js for playback");
+      const hls = new Hls({
+        debug: true,
+        enableWorker: true,
+      });
+      hls.loadSource(videoUrl);
+      hls.attachMedia(videoElement);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        console.log("HLS manifest parsed, attempting playback");
+      });
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error("HLS error:", data);
+      });
+    } else if (videoElement.canPlayType("application/vnd.apple.mpegurl")) {
+      console.log("Using native HLS playback");
+      videoElement.src = videoUrl;
+    } else {
+      console.warn("HLS is not supported on this browser, URL:", videoUrl);
+      videoElement.src = videoUrl;
+    }
+
+    videoElement.addEventListener("error", (e) => {
+      console.error("Video error:", e.target.error);
+    });
+  }
 
   return videoContainer;
 }
@@ -524,11 +541,11 @@ async function getVideoOfVideos(page = 1) {
   const videosResponse = await getVideos(page);
 
   if (videosResponse.videos.length > 0) {
-    const videosDetail = await Promise.all(
-      videosResponse.videos.map((video) => getVideo(video.id))
-    );
-
-    return { videosDetail, pageInfo: videosResponse.page_info };
+    console.log("Got videos response:", videosResponse);
+    return {
+      videosDetail: videosResponse.videos,
+      pageInfo: videosResponse.page_info,
+    };
   }
 }
 

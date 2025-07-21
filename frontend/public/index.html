@@ -4,11 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="media-src * blob:; connect-src *;">
   <link href="./output.css" rel="stylesheet">
   <script src="https://kit.fontawesome.com/25ca684e07.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <title>Shade Finder</title>
   <link rel="icon" type="image/svg+xml" href="./images/palettte.svg">
-
 </head>
 
 <body>
@@ -26,15 +27,26 @@
     </div>
   </div>
 
-  <div id ="video-list-container" class="container max-w-5xl mx-auto py-4">
-  <div id ="video-list-loading" class="container max-w-5xl mx-auto py-4"> </div>
-  <div id="video-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 justify-items-center"></div>
-  <div id="video-list-pagination" class="flex justify-center m-5 gap-2"></div>
+  <div id="video-list-container" class="container max-w-5xl mx-auto py-4">
+    <div id="video-list-loading" class="container max-w-5xl mx-auto py-4"></div>
+    <div id="video-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 justify-items-center">
+      <!-- Video items will be added here -->
+    </div>
+    <div id="video-list-pagination" class="flex justify-center m-5 gap-2"></div>
   </div>
 
   <div id="search-result-container" class="container max-w-5xl mx-auto py-4 hidden">
-  <div id="search-result-list" class="grid grid-cols-1 md:grid-cols-4 justify-center"></div>
+    <div id="search-result-list" class="grid grid-cols-1 md:grid-cols-4 justify-center"></div>
   </div>
+
+  <template id="video-template">
+    <div class="video-container flex flex-col items-center p-3 gap-1 my-4 w-full max-w-xs">
+      <div class="video-title text-center mb-2 text-sm truncate w-full"></div>
+      <div class="video-player relative w-full aspect-video bg-black rounded-lg overflow-hidden">
+        <video class="w-full h-full" controls playsinline crossorigin="anonymous"></video>
+      </div>
+    </div>
+  </template>
 
   <script src="./script.js"></script>
 </body>
