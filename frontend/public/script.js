@@ -489,42 +489,28 @@ function createPageButton(pageNumber, currentPage) {
   console.log("Creating page button:", {
     pageNumber,
     currentPage,
-    isActive: pageNumber === currentPage,
+    isActive: pageNumber === parseInt(currentPage),
   });
 
   const pageButton = document.createElement("button");
   pageButton.textContent = pageNumber;
   pageButton.classList.add(
-    "px-4", // 더 넓은 패딩
-    "py-2", // 더 높은 패딩
-    "rounded-lg", // 더 부드러운 모서리
+    "w-8",
+    "h-8",
+    "flex",
+    "items-center",
+    "justify-center",
+    "rounded-full",
     "transition",
     "duration-200",
-    "mx-1",
-    "min-w-[40px]", // 최소 너비 설정
-    "text-lg" // 더 큰 글자 크기
+    "text-sm"
   );
 
   if (pageNumber === parseInt(currentPage)) {
-    pageButton.classList.add(
-      "bg-lime-600", // 더 진한 배경색
-      "text-white",
-      "font-bold", // 더 굵은 글자
-      "border-2",
-      "border-lime-700",
-      "shadow-lg", // 더 강한 그림자
-      "scale-110" // 약간 더 크게
-    );
+    pageButton.classList.add("bg-gray-200", "text-gray-900");
     pageButton.disabled = true;
   } else {
-    pageButton.classList.add(
-      "bg-white",
-      "hover:bg-lime-100",
-      "hover:scale-105", // 호버 시 약간 확대
-      "border-2", // 더 두꺼운 테두리
-      "border-lime-300",
-      "text-lime-700" // 라임색 텍스트
-    );
+    pageButton.classList.add("text-gray-500", "hover:bg-gray-100");
     pageButton.addEventListener("click", () => showVideos(pageNumber));
   }
 
@@ -546,34 +532,36 @@ function createPaginationButtons(pageInfo, currentPage) {
     return;
   }
 
+  const paginationContainer = document.createElement("div");
+  paginationContainer.classList.add("inline-flex", "items-center", "gap-1");
+
   // Previous button
   if (currentPage > 1) {
     const prevButton = document.createElement("button");
     prevButton.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
     prevButton.classList.add(
-      "bg-white",
-      "px-4",
-      "py-2",
-      "rounded-lg",
-      "hover:bg-lime-100",
-      "border-2",
-      "border-lime-300",
-      "text-lime-700",
+      "w-8",
+      "h-8",
+      "flex",
+      "items-center",
+      "justify-center",
+      "rounded-full",
+      "text-gray-500",
+      "hover:bg-gray-100",
       "transition",
-      "duration-200",
-      "hover:scale-105"
+      "duration-200"
     );
     prevButton.addEventListener("click", () => {
       console.log("Navigating to previous page:", currentPage - 1);
       showVideos(currentPage - 1);
     });
-    videoListPagination.appendChild(prevButton);
+    paginationContainer.appendChild(prevButton);
   }
 
   // Page buttons
   for (let i = 1; i <= pageInfo.total_page; i++) {
     const pageButton = createPageButton(i, currentPage);
-    videoListPagination.appendChild(pageButton);
+    paginationContainer.appendChild(pageButton);
   }
 
   // Next button
@@ -581,27 +569,28 @@ function createPaginationButtons(pageInfo, currentPage) {
     const nextButton = document.createElement("button");
     nextButton.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
     nextButton.classList.add(
-      "bg-white",
-      "px-4",
-      "py-2",
-      "rounded-lg",
-      "hover:bg-lime-100",
-      "border-2",
-      "border-lime-300",
-      "text-lime-700",
+      "w-8",
+      "h-8",
+      "flex",
+      "items-center",
+      "justify-center",
+      "rounded-full",
+      "text-gray-500",
+      "hover:bg-gray-100",
       "transition",
-      "duration-200",
-      "hover:scale-105"
+      "duration-200"
     );
     nextButton.addEventListener("click", () => {
       console.log("Navigating to next page:", currentPage + 1);
       showVideos(currentPage + 1);
     });
-    videoListPagination.appendChild(nextButton);
+    paginationContainer.appendChild(nextButton);
   }
 
+  videoListPagination.appendChild(paginationContainer);
+
   console.log("Pagination buttons created:", {
-    totalButtons: videoListPagination.children.length,
+    totalButtons: paginationContainer.children.length,
     hasNext: currentPage < pageInfo.total_page,
     hasPrev: currentPage > 1,
     currentPageNumber: currentPage,
