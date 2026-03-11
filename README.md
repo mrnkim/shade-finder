@@ -6,7 +6,7 @@
 
 Shade Finder is an app designed to pinpoint moments in beauty and fashion videos where specific shades appear. Whether you're looking to identify products with particular colors or simply want to explore the hues that catch your eye, Shade Finder is your perfect companion!
 
-Powered by [Twelve Labs Image to Video Search](https://docs.twelvelabs.io/docs/image-queries), the app excels at finding videos featuring objects, colors, and shapes that closely match the images you provide. Ideal for beauty enthusiasts and fashion aficionados, Shade Finder ensures you never miss a moment of your favorite shades in action.
+Powered by [Twelve Labs Image to Video Search](https://docs.twelvelabs.io/sdk-reference/node-js/search), the app excels at finding videos featuring objects, colors, and shapes that closely match the images you provide. Ideal for beauty enthusiasts and fashion aficionados, Shade Finder ensures you never miss a moment of your favorite shades in action.
 
 ⭐️ Check out the [Demo](https://shade-finder-vercel-client.vercel.app/)!
 
@@ -20,6 +20,9 @@ Powered by [Twelve Labs Image to Video Search](https://docs.twelvelabs.io/docs/i
 
 - [JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 - [Node](https://nodejs.org/en)
+- [Twelve Labs Node.js SDK](https://www.npmjs.com/package/twelvelabs-js) (v1.2.1)
+- [HLS.js](https://github.com/video-dev/hls.js/) (video streaming)
+- [Tailwind CSS](https://tailwindcss.com/) with [Strand Design System](https://github.com/mrnkim/strand)
 
 ## 🔑 Getting Started
 
@@ -29,22 +32,7 @@ Visit [Twelve Labs Playground](https://playground.twelvelabs.io/) to generate yo
 
 - Once you sign up, you'll receive complimentary credits allowing you to index up to 10 hours of video content!
 
-### Step 2 (Option 1). Start the App on Replit
-
-1. Click the button below and fork the repl
-
-   [![Run on Replit](https://replit.com/badge/github/mrnkim/shade-finder)](https://replit.com/new/github/mrnkim/shade-finder)
-
-2. Update Secrets (equivalent to .env)
-
-   ```
-   TWELVE_LABS_API_KEY=<YOUR_API_KEY>
-   TWELVE_LABS_INDEX_ID=<YOUR_INDEX_ID>
-   ```
-
-3. Stop and Run the Repl
-
-### Step 2 (Option 2). Start the App Locally
+### Step 2. Start the App Locally
 
 1. Clone the current repo
 
@@ -67,6 +55,6 @@ Visit [Twelve Labs Playground](https://playground.twelvelabs.io/) to generate yo
    node server.js
    ```
 
-4. Open the `index.html` file in `frontend` > `public` folder or use Live Server (VSCode Extension)
+4. Open http://localhost:5001 in your browser
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
