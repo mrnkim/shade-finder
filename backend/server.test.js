@@ -17,7 +17,6 @@ describe("API Endpoints", () => {
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty("metadata");
     expect(res.body).toHaveProperty("hls");
-    expect(res.body).toHaveProperty("source");
   });
 
   it("should return search results based on an image query", async () => {

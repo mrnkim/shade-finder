@@ -1,3 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Strand CDN fonts */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-sans/style.min.css');
+
+/* Milling brand font (CDN-hosted) */
+@font-face {
+  font-family: 'Milling';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://d2n8i6crd2t3p1.cloudfront.net/font/milling/205TF-Milling-Duplex1mm.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Milling';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('https://d2n8i6crd2t3p1.cloudfront.net/font/milling/205TF-Milling-Triplex1mm.woff2') format('woff2');
+}

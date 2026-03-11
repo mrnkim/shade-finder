@@ -3,25 +3,23 @@
 let currImgIndex = 0;
 let nextPageToken;
 const videoCache = new Map();
-let activeIframe = null;
+let activeVideoElement = null;
 
 const SERVER = window.location.hostname?.includes("replit")
   ? `https://${window.location.hostname}/`
   : "http://localhost:5001/";
 
 const VIDEO_PAGE_LIMIT = 12;
-const THRESHOLD = "medium";
 const SEARCH_PAGE_LIMIT = 12;
-const CONFIDENCE_LEVEL = 0.6;
 
 /********************** Images Data ***************************/
 const images = [
   { src: "./images/berry.jpg", label: "Berry Shades" },
-  { src: "./images/orange.png", label: "Orange Shades" },
+  { src: "./images/orange.jpg", label: "Orange Shades" },
   { src: "./images/blue.png", label: "Blue Shades" },
   { src: "./images/green.png", label: "Green Shades" },
-  { src: "./images/pink.png", label: "Pink Shades" },
-  { src: "./images/brown.png", label: "Brown Shades" },
+  { src: "./images/pink.jpg", label: "Pink Shades" },
+  { src: "./images/brown.jpg", label: "Brown Shades" },
 ];
 
 /********************** DOM Elements **************************/
@@ -99,7 +97,8 @@ function createLoadingSpinner() {
   loadingSpinnerContainer.classList.add(
     "flex",
     "justify-center",
-    "items-center"
+    "items-center",
+    "py-12"
   );
 
   const loadingSpinner = document.createElement("img");
@@ -113,21 +112,13 @@ function createLoadingSpinner() {
 
 function displayNoResultsMessage() {
   const noResultsContainer = document.createElement("div");
-  noResultsContainer.classList.add("text-center", "my-4", "p-4");
+  noResultsContainer.classList.add("text-center", "my-8", "p-4");
 
   const noResultsMessage = document.createElement("p");
   noResultsMessage.textContent = "No search results found :(";
-  noResultsMessage.classList.add("text-center", "my-4");
+  noResultsMessage.classList.add("text-center", "my-4", "text-text-secondary");
 
   const backToHomeButton = createBackToHomeButton();
-  backToHomeButton.classList.add(
-    "flex",
-    "justify-center",
-    "items-center",
-    "my-4",
-    "mx-auto",
-    "p-4"
-  );
 
   noResultsContainer.appendChild(noResultsMessage);
   noResultsContainer.appendChild(backToHomeButton);
@@ -163,134 +154,196 @@ async function showSearchResults(searchResults) {
 function displaySearchResult(result) {
   const videoContainer = document.createElement("div");
   videoContainer.classList.add(
-    "flex",
-    "flex-col",
-    "justify-center",
-    "items-center",
-    "p-3",
-    "gap-1",
-    "my-4"
+    "bg-surface",
+    "rounded-2xl",
+    "overflow-hidden",
+    "border",
+    "border-border-light",
+    "hover:border-border",
+    "transition"
   );
+
+  const thumbnailContainer = createThumbnailContainer(result);
+  const contentContainer = document.createElement("div");
+  contentContainer.classList.add("p-3");
 
   const videoTitle = createVideoTitle(result);
-  const thumbnailContainer = createThumbnailContainer(result);
-  const iframeContainer = createIframeContainer(result);
   const resultDetails = createResultDetails(result);
 
-  videoContainer.append(
-    videoTitle,
-    thumbnailContainer,
-    iframeContainer,
-    resultDetails
-  );
+  contentContainer.append(videoTitle, resultDetails);
+  videoContainer.append(thumbnailContainer, contentContainer);
   searchResultList.appendChild(videoContainer);
   searchResultContainer.appendChild(searchResultList);
-
-  thumbnailContainer.querySelector("img").addEventListener("click", () => {
-    toggleThumbnailAndIframe(thumbnailContainer, iframeContainer, result);
-  });
 }
 
 function createVideoTitle(result) {
-  const videoTitle = document.createElement("div");
+  const videoTitle = document.createElement("p");
   videoTitle.classList.add(
-    "w-full",
-    "overflow-hidden",
-    "whitespace-nowrap",
-    "text-ellipsis"
+    "text-xs",
+    "font-medium",
+    "truncate",
+    "mb-1"
   );
-  videoTitle.innerHTML = `<p class="text-center mb-2 text-xs truncate">${result.videoDetail.metadata.filename}</p>`;
+  videoTitle.textContent = result.videoDetail?.metadata?.filename || "Untitled";
   return videoTitle;
 }
 
 function createThumbnailContainer(result) {
   const thumbnailContainer = document.createElement("div");
+  thumbnailContainer.classList.add("relative", "cursor-pointer", "group");
+
   const thumbnailImage = document.createElement("img");
   thumbnailImage.src = result.thumbnailUrl;
   thumbnailImage.alt = "Video Thumbnail";
-  thumbnailImage.style.maxWidth = "100%";
-  thumbnailImage.style.maxHeight = "100%";
-  thumbnailImage.style.cursor = "pointer";
-  thumbnailContainer.appendChild(thumbnailImage);
+  thumbnailImage.classList.add("w-full", "aspect-video", "object-cover");
+
+  const playOverlay = document.createElement("div");
+  playOverlay.classList.add(
+    "absolute",
+    "inset-0",
+    "flex",
+    "items-center",
+    "justify-center",
+    "bg-black/20",
+    "opacity-0",
+    "group-hover:opacity-100",
+    "transition"
+  );
+  playOverlay.innerHTML =
+    '<i class="fa-solid fa-play text-white text-2xl"></i>';
+
+  thumbnailContainer.append(thumbnailImage, playOverlay);
+
+  thumbnailContainer.addEventListener("click", () => {
+    openVideoPlayer(result);
+  });
+
   return thumbnailContainer;
 }
 
-function createIframeContainer(result) {
-  const iframeContainer = document.createElement("div");
-  iframeContainer.style.display = "none";
-  const iframeElement = document.createElement("iframe");
-  iframeElement.width = 220;
-  iframeElement.height = 140;
-  iframeElement.src = `${result.videoDetail.source.url.replace(
-    "watch?v=",
-    "embed/"
-  )}?start=${Math.round(result.start)}&end=${Math.round(result.end)}`;
-  iframeElement.allow =
-    "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-  iframeElement.allowFullscreen = true;
-  iframeContainer.appendChild(iframeElement);
-  return iframeContainer;
+function openVideoPlayer(result) {
+  if (!result.videoDetail?.hls?.videoUrl) return;
+
+  // Close any previously active video
+  if (activeVideoElement) {
+    activeVideoElement.pause();
+    const oldOverlay = document.getElementById("video-overlay");
+    if (oldOverlay) oldOverlay.remove();
+  }
+
+  const overlay = document.createElement("div");
+  overlay.id = "video-overlay";
+  overlay.classList.add(
+    "fixed",
+    "inset-0",
+    "z-50",
+    "bg-black/80",
+    "flex",
+    "items-center",
+    "justify-center",
+    "p-4"
+  );
+
+  const playerContainer = document.createElement("div");
+  playerContainer.classList.add(
+    "relative",
+    "w-full",
+    "max-w-3xl",
+    "bg-black",
+    "rounded-xl",
+    "overflow-hidden"
+  );
+
+  const closeButton = document.createElement("button");
+  closeButton.classList.add(
+    "absolute",
+    "top-3",
+    "right-3",
+    "z-10",
+    "text-white",
+    "bg-black/50",
+    "rounded-full",
+    "w-8",
+    "h-8",
+    "flex",
+    "items-center",
+    "justify-center",
+    "hover:bg-black/70",
+    "transition"
+  );
+  closeButton.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+  closeButton.addEventListener("click", () => {
+    video.pause();
+    if (video.hlsInstance) video.hlsInstance.destroy();
+    overlay.remove();
+    activeVideoElement = null;
+  });
+
+  const video = document.createElement("video");
+  video.classList.add("w-full", "aspect-video");
+  video.controls = true;
+  video.autoplay = true;
+
+  playerContainer.append(closeButton, video);
+  overlay.appendChild(playerContainer);
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      video.pause();
+      if (video.hlsInstance) video.hlsInstance.destroy();
+      overlay.remove();
+      activeVideoElement = null;
+    }
+  });
+
+  document.body.appendChild(overlay);
+  activeVideoElement = video;
+
+  const hlsUrl = result.videoDetail.hls.videoUrl;
+  const startTime = result.start || 0;
+
+  if (Hls.isSupported()) {
+    const hls = new Hls();
+    hls.loadSource(hlsUrl);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.currentTime = startTime;
+      video.play();
+    });
+    video.hlsInstance = hls;
+  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    video.src = hlsUrl;
+    video.addEventListener("loadedmetadata", () => {
+      video.currentTime = startTime;
+      video.play();
+    });
+  }
 }
 
 function createResultDetails(result) {
   const resultDetails = document.createElement("div");
-  resultDetails.classList.add("text-center", "text-xs");
+  resultDetails.classList.add("flex", "items-center", "justify-between", "text-xs");
 
-  const confidenceSpan = document.createElement("span");
-  confidenceSpan.innerText = result.confidence;
-  confidenceSpan.classList.add(
-    ...addConfidenceClass(result.confidence),
-    "ml-2"
-  );
-  confidenceSpan.style.display = "inline-block";
-
-  const detailsText = document.createElement("p");
-  detailsText.innerText = `${Math.floor(result.start / 60)
+  const timeText = document.createElement("span");
+  timeText.classList.add("text-text-secondary");
+  timeText.textContent = `${Math.floor(result.start / 60)
     .toString()
     .padStart(2, "0")}:${Math.floor(result.start % 60)
     .toString()
-    .padStart(2, "0")}~${Math.floor(result.end / 60)
+    .padStart(2, "0")} - ${Math.floor(result.end / 60)
     .toString()
     .padStart(2, "0")}:${Math.floor(result.end % 60)
     .toString()
     .padStart(2, "0")}`;
-  detailsText.appendChild(confidenceSpan);
-  resultDetails.appendChild(detailsText);
 
+  const confidenceSpan = document.createElement("span");
+  confidenceSpan.textContent = result.confidence;
+  confidenceSpan.classList.add(
+    ...addConfidenceClass(result.confidence)
+  );
+
+  resultDetails.append(timeText, confidenceSpan);
   return resultDetails;
-}
-
-function toggleThumbnailAndIframe(thumbnailContainer, iframeContainer, result) {
-  const iframeElement = iframeContainer.querySelector("iframe");
-
-  // If there is an active iframe and it's not the same as the one being clicked
-  if (activeIframe && activeIframe !== iframeElement) {
-    const activeSrc = activeIframe.src;
-    activeIframe.src = ""; // Stop the currently playing video
-    
-    activeIframe.parentNode.previousElementSibling.style.display = "block"; // Show the thumbnail
-    activeIframe.parentNode.style.display = "none"; // Hide the iframe
-
-    activeIframe.src = activeSrc.replace("&autoplay=1", ""); // Reset the src to stop autoplay
-  }
-
-  if (thumbnailContainer.style.display === "none") {
-    // The iframe is currently visible, so switch back to the thumbnail
-    thumbnailContainer.style.display = "block";
-    iframeContainer.style.display = "none";
-  } else {
-    // The thumbnail is currently visible, so switch to the iframe
-    thumbnailContainer.style.display = "none";
-    iframeContainer.style.display = "block";
-
-    // Only update the iframe src if it's not already set to autoplay
-    if (!iframeElement.src.includes("autoplay=1")) {
-      iframeElement.src += "&autoplay=1";
-    }
-
-    // Set this iframe as the active one
-    activeIframe = iframeElement;
-  }
 }
 
 function createShowMoreButton() {
@@ -298,10 +351,22 @@ function createShowMoreButton() {
 
   const showMoreButtonContainer = document.createElement("div");
   showMoreButtonContainer.id = "show-more-button";
-  showMoreButtonContainer.classList.add("flex", "justify-center", "my-4");
+  showMoreButtonContainer.classList.add("flex", "justify-center", "my-6");
 
   const showMoreButton = document.createElement("button");
-  showMoreButton.innerHTML = '<i class="fa-solid fa-chevron-up"></i> Show More';
+  showMoreButton.classList.add(
+    "bg-brand-charcoal",
+    "text-text-inverse",
+    "hover:bg-gray-600",
+    "px-6",
+    "py-2.5",
+    "rounded-xl",
+    "text-sm",
+    "font-medium",
+    "transition"
+  );
+  showMoreButton.innerHTML =
+    '<i class="fa-solid fa-chevron-down mr-1"></i> Show More';
 
   showMoreButton.addEventListener("click", async () => {
     const loadingSpinnerContainer = createLoadingSpinner();
@@ -327,7 +392,7 @@ function removeExistingButton() {
 
 function appendBackToHomeButton() {
   const buttonContainer = document.createElement("div");
-  buttonContainer.classList.add("flex", "justify-center", "gap-12", "my-4");
+  buttonContainer.classList.add("flex", "justify-center", "my-6");
 
   const backToHomeButton = createBackToHomeButton();
   buttonContainer.appendChild(backToHomeButton);
@@ -338,38 +403,64 @@ function appendBackToHomeButton() {
 function addConfidenceClass(confidence) {
   const confidenceClasses = {
     high: [
-      "bg-teal-400",
+      "bg-success",
       "text-white",
-      "p-1",
-      "rounded",
+      "px-2",
+      "py-0.5",
+      "rounded-full",
       "text-xs",
+      "font-medium",
       "capitalize",
     ],
     medium: [
-      "bg-yellow-400",
+      "bg-warning",
       "text-white",
-      "p-1",
-      "rounded",
+      "px-2",
+      "py-0.5",
+      "rounded-full",
       "text-xs",
+      "font-medium",
       "capitalize",
     ],
     low: [
-      "bg-zinc-400",
+      "bg-gray-400",
       "text-white",
-      "p-1",
-      "rounded",
+      "px-2",
+      "py-0.5",
+      "rounded-full",
       "text-xs",
+      "font-medium",
       "capitalize",
     ],
-    default: ["bg-gray-500", "text-white", "p-1", "rounded", "text-xs"],
+    default: [
+      "bg-gray-500",
+      "text-white",
+      "px-2",
+      "py-0.5",
+      "rounded-full",
+      "text-xs",
+      "font-medium",
+    ],
   };
   return confidenceClasses[confidence] || confidenceClasses.default;
 }
 
 function createBackToHomeButton() {
   const backToHomeButton = document.createElement("button");
+  backToHomeButton.classList.add(
+    "bg-surface",
+    "border",
+    "border-border-light",
+    "hover:border-border",
+    "px-6",
+    "py-2.5",
+    "rounded-xl",
+    "text-sm",
+    "font-medium",
+    "transition"
+  );
   backToHomeButton.innerHTML =
-    '<i class="fa-solid fa-rotate-left"></i> Back to Home';
+    '<i class="fa-solid fa-rotate-left mr-1"></i> Back to Home';
   backToHomeButton.addEventListener("click", () => {
     searchResultContainer.classList.add("hidden");
     videoListContainer.classList.remove("hidden");
@@ -412,7 +503,7 @@ async function searchByImage() {
   const data = await fetchFromServer(
     `${SERVER}search?imageSrc=${encodeURIComponent(
       imageSrc
-    )}&threshold=${THRESHOLD}&pageLimit=${SEARCH_PAGE_LIMIT}&adjustConfidenceLevel=${CONFIDENCE_LEVEL}`
+    )}&pageLimit=${SEARCH_PAGE_LIMIT}`
   );
   if (data) {
     nextPageToken = data.pageInfo.nextPageToken;
@@ -462,27 +553,56 @@ async function showVideos(page = 1) {
 function createVideoContainer(video) {
   const videoContainer = document.createElement("div");
   videoContainer.classList.add(
-    "flex",
-    "flex-col",
-    "items-center",
-    "p-3",
-    "gap-1",
-    "my-4",
-    "h-full"
+    "bg-surface",
+    "rounded-2xl",
+    "overflow-hidden",
+    "border",
+    "border-border-light",
+    "hover:border-border",
+    "transition",
+    "cursor-pointer"
   );
 
-  const iframeElement = document.createElement("iframe");
-  iframeElement.width = "100%";
-  iframeElement.height = "auto";
-  iframeElement.src = video.source.url.replace("watch?v=", "embed/");
-  iframeElement.allow =
-    "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-  iframeElement.allowFullscreen = true;
+  const thumbnailContainer = document.createElement("div");
+  thumbnailContainer.classList.add("relative", "group");
+
+  const thumbnailImage = document.createElement("img");
+  const thumbnailUrl = video.hls?.thumbnailUrls?.[0];
+  if (thumbnailUrl) {
+    thumbnailImage.src = thumbnailUrl;
+  }
+  thumbnailImage.alt = video.metadata?.filename || "Video thumbnail";
+  thumbnailImage.classList.add("w-full", "aspect-video", "object-cover", "bg-card");
+
+  const playOverlay = document.createElement("div");
+  playOverlay.classList.add(
+    "absolute",
+    "inset-0",
+    "flex",
+    "items-center",
+    "justify-center",
+    "bg-black/20",
+    "opacity-0",
+    "group-hover:opacity-100",
+    "transition"
+  );
+  playOverlay.innerHTML =
+    '<i class="fa-solid fa-play text-white text-2xl"></i>';
+
+  thumbnailContainer.append(thumbnailImage, playOverlay);
 
   const videoTitle = document.createElement("div");
-  videoTitle.innerHTML = `<p class="mb-2 text-xs">${video.metadata.filename}</p>`;
+  videoTitle.classList.add("p-3");
+  videoTitle.innerHTML = `<p class="text-xs font-medium truncate">${video.metadata?.filename || "Untitled"}</p>`;
 
-  videoContainer.append(iframeElement, videoTitle);
+  videoContainer.append(thumbnailContainer, videoTitle);
+
+  videoContainer.addEventListener("click", () => {
+    openVideoPlayer({
+      start: 0,
+      videoDetail: video,
+    });
+  });
 
   return videoContainer;
 }
@@ -490,8 +610,8 @@ function createVideoContainer(video) {
 function createPaginationButtons(pageInfo, currentPage) {
   videoListPagination.innerHTML = "";
   for (let i = 1; i <= pageInfo.totalPage; i++) {
-    const pageButtonContainer = createPageButton(i, currentPage);
-    videoListPagination.appendChild(pageButtonContainer);
+    const pageButton = createPageButton(i, currentPage);
+    videoListPagination.appendChild(pageButton);
   }
 }
 
@@ -499,21 +619,23 @@ function createPageButton(pageNumber, currentPage) {
   const pageButton = document.createElement("button");
   pageButton.textContent = pageNumber;
   pageButton.classList.add(
-    "bg-lime-100",
-    "px-3",
-    "py-1",
+    "w-8",
+    "h-8",
     "rounded-full",
-    "hover:border",
-    "hover:border-slate-200",
-    "transition",
-    "duration-200"
+    "text-sm",
+    "transition"
   );
 
   if (pageNumber === currentPage) {
-    pageButton.classList.add("bg-slate-200", "font-medium");
+    pageButton.classList.add("bg-brand-charcoal", "text-text-inverse", "font-medium");
     pageButton.disabled = true;
   } else {
-    pageButton.classList.add("bg-transparent");
+    pageButton.classList.add(
+      "bg-surface",
+      "border",
+      "border-border-light",
+      "hover:border-border"
+    );
     pageButton.addEventListener("click", () => showVideos(pageNumber));
   }
 

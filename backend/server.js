@@ -38,19 +38,19 @@ app.get(
   asyncHandler(async (req, res, next) => {
     const { page_limit, page } = req.query;
 
-    const videosResponse = await client.index.video.listPagination(INDEX_ID, {
-      pageLimit: page_limit,
-      page: page,
+    const videosResponse = await client.indexes.videos.list(INDEX_ID, {
+      pageLimit: parseInt(page_limit) || 12,
+      page: parseInt(page) || 1,
     });
 
     const videos = videosResponse.data.map((video) => ({
       id: video.id,
-      metadata: video.metadata,
+      metadata: video.systemMetadata,
     }));
 
     res.json({
       videos,
-      page_info: videosResponse.pageInfo,
+      page_info: videosResponse.response?.pageInfo,
     });
   })
 );
@@ -61,12 +61,11 @@ app.get(
   asyncHandler(async (req, res, next) => {
     const { videoId } = req.params;
 
-    const videoResponse = await client.index.video.retrieve(INDEX_ID, videoId);
+    const videoResponse = await client.indexes.videos.retrieve(INDEX_ID, videoId);
 
     res.json({
-      metadata: videoResponse.metadata,
+      metadata: videoResponse.systemMetadata,
       hls: videoResponse.hls,
-      source: videoResponse.source,
     });
   })
 );
@@ -88,19 +87,22 @@ app.get(
       return res.status(404).json({ error: "Image not found" });
     }
 
-    const searchResponse = await client.search.query({
+    const queryParams = {
       indexId: INDEX_ID,
       queryMediaFile: fs.createReadStream(imagePath),
       queryMediaType: "image",
-      options: ["visual"],
-      threshold: threshold,
-      pageLimit: pageLimit,
-      adjustConfidenceLevel: adjustConfidenceLevel,
-    });
+      searchOptions: ["visual"],
+      pageLimit: parseInt(pageLimit) || 12,
+    };
+    if (threshold) queryParams.threshold = threshold;
+    if (adjustConfidenceLevel)
+      queryParams.adjustConfidenceLevel = parseFloat(adjustConfidenceLevel);
+
+    const searchResponse = await client.search.query(queryParams);
 
     res.json({
       searchResults: searchResponse.data,
-      pageInfo: searchResponse.pageInfo,
+      pageInfo: searchResponse.response?.pageInfo,
     });
   })
 );
@@ -111,7 +113,7 @@ app.get(
   asyncHandler(async (req, res, next) => {
     const { pageToken } = req.params;
 
-    let searchByPageResponse = await client.search.byPageToken(`${pageToken}`);
+    let searchByPageResponse = await client.search.retrieve(`${pageToken}`);
 
     res.json({
       searchResults: searchByPageResponse.data,

@@ -6,35 +6,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="./output.css" rel="stylesheet">
   <script src="https://kit.fontawesome.com/25ca684e07.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <title>Shade Finder</title>
   <link rel="icon" type="image/svg+xml" href="./images/palettte.svg">
-
 </head>
 
-<body>
-  <h1 class="text-3xl text-center m-5 p-3"><i class="fa-solid fa-palette"></i> Shade Finder</h1>
+<body class="bg-background text-text-primary font-brand min-h-screen">
 
-  <div class="m-3 p-3">
-    <p class="text-center m-5" id="color-label"></p>
-    <div class="flex justify-center gap-5">
-      <button id="prev"><i class="fa-solid fa-chevron-left"></i></button>
-      <div class="size-40"><img id="carousel-image"></div>
-      <button id="next"><i class="fa-solid fa-chevron-right"></i></button>
+  <header class="pt-10 pb-8 text-center">
+    <h1 class="text-h3 font-brand-bold tracking-tight">
+      Shade Finder
+    </h1>
+    <p class="text-base text-text-secondary mt-1">Find the exact shade in beauty videos</p>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6">
+
+    <!-- Shade picker -->
+    <div class="flex flex-col items-center mb-10">
+      <p class="text-sm font-medium mb-2" id="color-label"></p>
+      <div class="flex items-center gap-6">
+        <button id="prev" class="w-10 h-10 rounded-full bg-surface hover:bg-card transition flex items-center justify-center border border-border-light">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+        <div class="w-44 h-44 rounded-2xl overflow-hidden border border-border-light">
+          <img id="carousel-image" class="w-full h-full object-cover">
+        </div>
+        <button id="next" class="w-10 h-10 rounded-full bg-surface hover:bg-card transition flex items-center justify-center border border-border-light">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+      </div>
+      <div class="mt-6">
+        <button id="search" class="bg-brand-charcoal hover:bg-gray-600 text-text-inverse font-medium py-2.5 px-8 rounded-xl text-sm transition">
+          Search
+        </button>
+      </div>
     </div>
-    <div class="flex justify-center m-5 gap-2">
-      <button id="search" class="bg-lime-400 py-2.5 px-3">Search</button>
+
+    <!-- Video list -->
+    <div id="video-list-container">
+      <div id="video-list-loading"></div>
+      <div id="video-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5"></div>
+      <div id="video-list-pagination" class="flex justify-center mt-8 gap-2 pb-10"></div>
     </div>
-  </div>
 
-  <div id ="video-list-container" class="container max-w-5xl mx-auto py-4">
-  <div id ="video-list-loading" class="container max-w-5xl mx-auto py-4"> </div>
-  <div id="video-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 justify-items-center"></div>
-  <div id="video-list-pagination" class="flex justify-center m-5 gap-2"></div>
-  </div>
+    <!-- Search results -->
+    <div id="search-result-container" class="hidden pb-10">
+      <div id="search-result-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5"></div>
+    </div>
 
-  <div id="search-result-container" class="container max-w-5xl mx-auto py-4 hidden">
-  <div id="search-result-list" class="grid grid-cols-1 md:grid-cols-4 justify-center"></div>
-  </div>
+  </main>
 
   <script src="./script.js"></script>
 </body>
